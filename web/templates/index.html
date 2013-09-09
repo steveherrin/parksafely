@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% set active_page = "index" %}
+{% block body %}
+<div class="">
+  <div class="row-fluid">
+    <div class="span8 offset2">
+      <h1> Where Should I Park in SF?</h1>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <form class="form-search" action="{{ url_for('map') }}" method=get>
+      <div class="span4 offset2 search input-append">
+        <input type="text" class="input span12" name="address" placeholder="Enter an address…">
+        <span class="add-on">San Francisco, CA</span>
+      </div>
+      <div class="span1 offset2 search">
+        <button type="submit" class="btn btn-info">Search</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

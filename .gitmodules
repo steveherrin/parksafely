@@ -1,0 +1,3 @@
+[submodule "web/static/js/purl"]
+	path = web/static/js/purl
+	url = git://github.com/allmarkedup/purl.git

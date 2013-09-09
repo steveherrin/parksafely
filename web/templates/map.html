@@ -1,0 +1,303 @@
+{% extends "layout.html" %}
+
+{% block body %}
+		<div class="row-fluid">
+		  <div class="span8">
+		    <div class="container-fluid" id="map-canvas"></div>
+		  </div>
+		  <div class="span4">
+		    <legend>Your Search</legend>
+
+          <div class="container-fluid">
+            <div class="form-horizontal form-small" style="margin-left: -30px;">
+              <fieldset>
+              <div class="control-group">
+                <label class="control-label" for="address">Address</label>
+                <div class="controls">
+                  <input id="address" name="address" type="text" placeholder="" class="input-large" onchange="address_changed()">
+                  <input id="citystate" class="input-large" name="" type="text" disabled value="San Francisco, CA">
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="max_d">Max Distance</label>
+                  <div class="controls">
+                    <select id="max_d" name="max_d" class="input-small" onchange="max_d_changed()">
+                      <option value=160.9>0.10 mi</option>
+                      <option value=241.4>0.15 mi</option>
+                      <option value=321.9>0.20 mi</option>
+                      <option selected="selected" value=402.9>0.25 mi</option>
+                      <option value=804.7>0.50 mi</option>
+                    </select>
+                  </div>
+                </div>
+             </fieldset>
+            </div>
+        </div>
+        <div class="row-fluid">
+		        <div class="container-fluid" id="errors"></div>
+		    </div>
+		    <legend>Recommended Parking</legend>
+        {% for result_num in range(config['MAX_RESULTS']) %}
+		    <div class="row-fluid" data-n="{{result_num}}" id="text{{result_num}}">
+          <div class="span2">
+            <div class="container-fluid" id="icon{{result_num}}"></div>
+          </div>
+          <div class="span9">
+		        <div class="container-fluid" id="subtext{{result_num}}"></div>
+          </div>
+		    </div>
+		    {% endfor %}
+		  </div>
+		</div>
+{% endblock %}
+
+{% block scripts %}
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ config['MAPS_API_KEY'] }}&sensor=false">
+	  </script>
+		<style type="text/css">
+			body { padding-top: 40px; }
+			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
+			.form-small .control-label { width: 100px; }
+      .form-small .controls { margin-left: 120px; }
+      .saferank0 { color: #FF0000; }
+      .saferank1 { color: #FF3800; }
+      .saferank2 { color: #FF7100; }
+      .saferank3 { color: #FFAA00; }
+      .saferank4 { color: #FFE200; }
+      .saferank5 { color: #E2FF00; }
+      .saferank6 { color: #AAFF00; }
+      .saferank7 { color: #71FF00; }
+      .saferank8 { color: #38FF00; }
+      .saferank9 { color: #00FF00; }
+		</style>
+		<script type="text/javascript">
+
+			var map;
+			var Markers;
+			var InfoWindows;
+			var SearchParams = {};
+
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(37.7833, -122.4167),
+				  zoom: 12,
+				  mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var h = $(window).height();
+        offset = 40;
+        $('#map-canvas').css('height', (h - offset));
+        map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+        if ($.url().param('address') != undefined) {
+          console.log($.url().param('address'));
+          update_address($.url().param('address'));
+        }
+        if ($.url().param('max_d') != undefined) {
+          SearchParams['max_d'] = $.url().param('max_d');
+        } else {
+          SearchParams['max_d'] = 402.9;
+        }
+      }
+
+      window.onpopstate = function(event) {
+        if (event.state) {
+          SearchParams = event.state;
+          newSearch();
+        }
+      }
+
+      function update_address(address_string) {
+        SearchParams['address_string'] = $.trim(address_string);
+        document.getElementById('address').value = SearchParams['address_string'];
+        $.getJSON("http://maps.google.com/maps/api/geocode/json?address="+
+                   encodeURIComponent(SearchParams['address_string']+
+                                      ', San Francisco, CA')+
+                   "&sensor=false", update_coords)
+        .fail(lookupFailed);
+      }
+
+
+      function address_changed() {
+        update_address(document.getElementById('address').value);
+      }
+
+      function max_d_changed() {
+        SearchParams['max_d'] = document.getElementById('max_d').value;
+        newSearch();
+      }
+
+      function lookupFailed() {
+        console.log("Address lookup failed.");
+        document.getElementById('errors').innerHTML = "<h5>Sorry</h5>"+
+              "<p>Looking up the address failed. <br />"+
+              "Make sure it's correct and try again later.</p>";
+      }
+
+      function update_coords(geo_data) {
+        if (geo_data.status != "OK") {
+          console.log("Geocoding failed with " + geo_data.status);
+          lookupFailed();
+        } else {
+          if (geo_data.results.length > 1) {
+            console.log("Multiple matches for address.");
+          }
+          var loc = geo_data.results[0].geometry.location;
+          SearchParams['lat'] = loc.lat;
+          SearchParams['lon'] = loc.lng;
+          var form_add = geo_data.results[0].formatted_address;
+          document.getElementById('address').value = form_add.split(',')[0]
+          newSearch();
+        }
+      }
+
+      function newSearch() {
+        old_SearchParams = SearchParams;
+        if (Markers) {
+          for (var i=0; i < Markers.length; i++) {
+            Markers[i].setMap(null);
+          }
+          Markers.length = 0;
+        }
+
+        document.getElementById('errors').innerHTML = "";
+        for (var i=0; i < {{ config['MAX_RESULTS'] }}; i++) {
+          document.getElementById('subtext'+i).innerHTML = "";
+        }
+        $.getJSON("{{ url_for('search') }}?lat="+
+                   encodeURIComponent(SearchParams['lat'])+
+                   "&lon="+encodeURIComponent(SearchParams['lon'])+
+                   "&max_d="+encodeURIComponent(SearchParams['max_d']), drawMarkers)
+             .fail(lookupFailed);
+        window.history.pushState(old_SearchParams,
+                                "map",
+                                "{{ url_for('map') }}?address="+
+                                encodeURIComponent(old_SearchParams['address_string'])+
+                                "&max_d="+
+                                encodeURIComponent(old_SearchParams['max_d']));
+      }
+
+      function getScoreColor(number) {
+        var red;
+        var green;
+        if (number < 50) {
+          green = Math.floor(255 * number/50);
+          red = 255;
+        } else {
+          green = 255;
+          red = Math.floor(255 * ((50 - number%50) / 50));
+        }
+        var color = "#" + red.toString(16)+
+                          green.toString(16)+
+                          "00";
+        return color;
+      }
+
+      function getMarkerColor(score) {
+        if (score < 25) {
+          return "red";
+        } else if (score < 50) {
+          return "orange";
+        } else if (score < 75) {
+          return "yellow";
+        } else {
+          return "green";
+        }
+      }
+
+      function drawMarkers(data, textStatus) {
+        var n = data.n;
+        map.panTo(new google.maps.LatLng(data.center.lat, data.center.lon));
+        map.setZoom(16)
+
+        console.log(JSON.stringify(data));
+
+        Markers = new Array(n);
+
+        if (n <= 0) {
+          document.getElementById('errors').innerHTML = "<h5>Sorry</h5>"+
+              "<p>There was no parking found within the specified range.</br />"+
+                 "Try increasing your search radius.</p>";
+        }
+
+        for(var i=0; i<n; i++) {
+          var address = data.addresses[i];
+          var name = data.names[i];
+          var score = data.scores[i];
+          var distance = data.distances[i];
+          var latitude = data.latitudes[i];
+          var longitude = data.longitudes[i];
+          var note = data.notes[i];
+
+          var color = getMarkerColor(score);
+
+          Markers[i] = new google.maps.Marker({
+            position: new google.maps.LatLng(latitude, longitude),
+            title: name,
+            icon: 'http://maps.google.com/mapfiles/ms/icons/'+color+'-dot.png',
+            map: map,
+            score: score
+          });
+
+          var title = name;
+          document.getElementById('icon'+i).innerHTML = '<i class="icon-shield icon-4x pull-left'+
+                     'icon-border saferank'+Math.floor(score/10)+'">';
+          var text = '<p><b>' + name + '</b><br />';
+          if (address) {
+            text += address + "<br />";
+          } else {
+            text += '&nbsp;<br />';
+          }
+          text +=  "Distance: "+
+                   distance + "</p>";
+
+          document.getElementById('subtext'+i).innerHTML = text;
+
+
+          var textdiv = document.getElementById('text'+i);
+          textdiv.style.cursor = 'pointer';
+
+          $(textdiv).click(function() {
+            var i = $(this).data('n');
+            var recenter = Markers[i].getPosition();
+            map.panTo(recenter);
+          });
+
+          $(textdiv).mouseover(function() {
+            var i = $(this).data('n');
+            Markers[i].setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+            Markers[i].setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+          });
+
+          $(textdiv).mouseout(function() {
+            var i = $(this).data('n');
+            var color = getMarkerColor(Markers[i].score);
+            Markers[i].setIcon('http://maps.google.com/mapfiles/ms/icons/'+color+'-dot.png');
+          });
+
+          google.maps.event.addListener(Markers[i], "mouseover", (function(i) {
+            return function() {
+              //document.getElementById('subtext'+i).className += "bs-callout bs-callout-info";
+              document.getElementById('text'+i).style.backgroundColor = "rgba(224,255,253,0.5)";
+              document.getElementById('text'+i).style.opactiy = "0.5";
+            }
+          })(i));
+
+          google.maps.event.addListener(Markers[i], "mouseout", (function(i) {
+            return function() {
+              //document.getElementById('subtext'+i).className = "container-fluid";
+              document.getElementById('text'+i).style.backgroundColor = "";
+            }
+          })(i));
+
+        }
+      }
+
+		google.maps.event.addDomListener(window, 'load', initialize);
+
+		$(window).resize(function () {
+      var h = $(window).height();
+      offset = 40;
+      $('#map-canvas').css('height', (h - offset));
+    }).resize();
+		</script>
+
+{% endblock %}
