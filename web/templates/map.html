@@ -161,6 +161,7 @@
         document.getElementById('errors').innerHTML = "";
         for (var i=0; i < {{ config['MAX_RESULTS'] }}; i++) {
           document.getElementById('subtext'+i).innerHTML = "";
+          document.getElementById('icon'+i).innerHTML = "";
         }
         $.getJSON("{{ url_for('search') }}?lat="+
                    encodeURIComponent(SearchParams['lat'])+
@@ -219,13 +220,15 @@
         }
 
         for(var i=0; i<n; i++) {
-          var address = data.addresses[i];
-          var name = data.names[i];
-          var score = data.scores[i];
-          var distance = data.distances[i];
-          var latitude = data.latitudes[i];
-          var longitude = data.longitudes[i];
-          var note = data.notes[i];
+          var result = data.results[i];
+          var address = result.address;
+          var name = result.location_name;
+          var score = result.score;
+          var distance = result.distance;
+          var latitude = result.lat;
+          var longitude = result.lon;
+          var safest = result.hasOwnProperty('safest');
+          var closest = result.hasOwnProperty('closest');
 
           var color = getMarkerColor(score);
 
