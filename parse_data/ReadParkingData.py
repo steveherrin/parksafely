@@ -68,6 +68,10 @@ def writeBikeParkingToDB(conn, entry):
             cursor.execute('UPDATE parking SET n_spots=%s WHERE id=%s',
                            (int(entry['n_spots']) + int(stored[4]), id))
             log_it = False
+        elif stored[4] > int(entry['n_spots']):
+            # Assume that someone was just wrong about how many spots there were
+            cursor.execute('UPDATE parking SET n_spots=%s WHERE id=%s',
+                            (int(entry['n_spots']), id))
         if log_it:
             log.write('-'*10)
             log.write('%s %s %s %s %s %s'%(stored))
