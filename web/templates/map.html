@@ -223,7 +223,7 @@
           var result = data.results[i];
           var address = result.address;
           var name = result.location_name;
-          var score = result.score;
+          var score = result.safescore;
           var distance = result.distance;
           var latitude = result.lat;
           var longitude = result.lon;
@@ -250,7 +250,11 @@
             text += '&nbsp;<br />';
           }
           text +=  "Distance: "+
-                   distance + "</p>";
+                   distance;
+          if (closest) {
+            text += " <small>(closest)</small>";
+          }
+          text += "</p>";
 
           document.getElementById('subtext'+i).innerHTML = text;
 

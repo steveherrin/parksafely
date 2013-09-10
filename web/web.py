@@ -90,9 +90,14 @@ def format_parking_for_output(parking):
         spot['address'] = prettify_str(spot['address'])
         (spot['location_name'],
          spot['address']) = pick_name_address(spot['location_name'], spot['address'])
-        spot['score'] = "%0.0f"%(spot['score'])
+        spot['safescore'] = "%0.0f"%(spot['safescore'])
         # 1 mile = 1609.344 m
         spot['distance'] = "%0.2f mi"%(spot['distance']/1609.344)
+        # Don't waste bandwidth on these
+        spot.pop('metric', None)
+        spot.pop('rank', None)
+        spot.pop('rate', None)
+        spot.pop('id', None)
     return parking
 
 @app.route("/search", methods=['GET'])
@@ -109,9 +114,9 @@ def search():
     parking = get_db().get_nearby_parking('bicycle', point, max_d)
     max_rate = max((x['rate'] for x in parking))
     for spot in parking:
-        spot['parksafescore'] = (spot['distance']/250)**2 + (spot['rate']/1.1)**2
+        spot['metric'] = (spot['distance']/250)**2 + (spot['rate']/1.1)**2
     if len(parking) > 0:
-        safest = max(parking, key=itemgetter('score'))
+        safest = max(parking, key=itemgetter('safescore'))
         closest = min(parking, key=itemgetter('distance'))
         safest['safest'] = True
         closest['closest'] = True
@@ -126,10 +131,10 @@ def search():
         # the safest, and the remaning top-ranked ones, sorted in order
         # of their rank
         # Reverse so pop() gets the lowest saferank (which is better)
-        parking.sort(key = itemgetter('parksafescore'), reverse=True)
+        parking.sort(key = itemgetter('metric'), reverse=True)
         while len(parking) > 0 and len(suggested) < app.config['MAX_RESULTS']:
             suggested.append(parking.pop())
-        suggested.sort(key = itemgetter('parksafescore'))
+        suggested.sort(key = itemgetter('metric'))
 
         suggested = format_parking_for_output(suggested)
         return jsonify(status = 'OK',
