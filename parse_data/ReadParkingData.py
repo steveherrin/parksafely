@@ -6,7 +6,7 @@ import requesocks as requests
 from db_info import conn_string
 
 log = open('duplicates.txt', 'w')
-use_geocoding = True
+use_geocoding = False
 
 use_SOCKS = True
 session = requests.session()
@@ -53,7 +53,7 @@ def writeBikeParkingToDB(conn, entry):
                                                                                entry['lon']));
         stored = cursor.fetchone()
         id = int(stored[0])
-        log_it = True
+        log_it = stored[3].lower() != entry['address'].lower()
         if 'undetermined' in stored[2].lower():
             # If the location didn't have a name before, update it
             cursor.execute('UPDATE parking SET location_name=%s WHERE id=%s',
@@ -76,6 +76,7 @@ def writeBikeParkingToDB(conn, entry):
             log.write('-'*10)
             log.write('%s %s %s %s %s %s'%(stored))
             log.write(str(entry))
+            log.write('\n\n')
 
         conn.commit()
     else:

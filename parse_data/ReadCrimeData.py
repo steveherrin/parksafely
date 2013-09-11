@@ -16,8 +16,8 @@ def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon):
     location = "ST_Transform(%s, 26943)"%(geom)
 
     try:
-        cursor.execute("""INSERT INTO crimes 
-            (incident_num, t, vehicle, severity, location) 
+        cursor.execute("""INSERT INTO crimes
+            (incident_num, t, vehicle, severity, location)
             VALUES (%s, %s, %s, %s, """ + location + ")",
             (incident_num, timestamp, vehicle, severity))
     except psycopg2.IntegrityError:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             row = {}
             for SimpleData in ExtendedData.findall(prefix + "SimpleData"):
                 row[SimpleData.get('name')] = SimpleData.text
-            
+
             info = getCrimeInfo(row['Description'])
 
             if info:
