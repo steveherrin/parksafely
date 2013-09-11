@@ -69,7 +69,6 @@ def prettify_str(name):
     name = re.sub(r'[0-9][SNRT]', lambda m: m.group(0).lower(), name)
     # Fix title casing for possessive
     name = re.sub(r'\'S(\s|$|\W)', lambda m: m.group(0).lower(), name)
-    # TODO:
     return name
 
 def pick_name_address(name, address):
