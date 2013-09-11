@@ -31,9 +31,6 @@
                       <div class="container-fluid">safer</div>
                     </div>
                   </div>
-
-              </div>
-              <div class="control-group">
                 <label class="control-label" for="max_d">Max Distance</label>
                 <div class="controls">
                   <select id="max_d" name="max_d" class="input-small" onchange="max_d_changed()">
@@ -75,14 +72,14 @@
 			.form-small .control-label { width: 100px; }
       .form-small .controls { margin-left: 120px; }
       .saferank0 { color: #FF0000; }
-      .saferank1 { color: #FF3800; }
-      .saferank2 { color: #FF7100; }
-      .saferank3 { color: #FFAA00; }
-      .saferank4 { color: #FFE200; }
-      .saferank5 { color: #E2FF00; }
-      .saferank6 { color: #AAFF00; }
-      .saferank7 { color: #71FF00; }
-      .saferank8 { color: #38FF00; }
+      .saferank1 { color: #FF5500; }
+      .saferank2 { color: #FFAA00; }
+      .saferank3 { color: #FFCC00; }
+      .saferank4 { color: #FFFF00; }
+      .saferank5 { color: #CCFF00; }
+      .saferank6 { color: #99FF00; }
+      .saferank7 { color: #66FF00; }
+      .saferank8 { color: #33FF00; }
       .saferank9 { color: #00FF00; }
 		</style>
 		<script type="text/javascript">
@@ -103,7 +100,6 @@
         $('#map-canvas').css('height', (h - offset));
         map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
         if ($.url().param('address') != undefined) {
-          console.log($.url().param('address'));
           update_address($.url().param('address'));
         }
         if ($.url().param('max_d') != undefined) {
@@ -117,7 +113,6 @@
         } else {
           SearchParams['preference'] = 0;
         }
-        console.log(SearchParams['preference']);
         $('#preference').slider({
             min: -10,
             max: 10,
@@ -126,7 +121,6 @@
             tooltip: 'hide',
             stop: preference_changed
         });
-        console.log($('#preference').slider("value"));
       }
 
 
@@ -161,12 +155,11 @@
 
       function preference_changed() {
         SearchParams['preference'] = $("#preference").slider("value");
-        console.log("Pref changed." + SearchParams['preference']);
         newSearch();
       }
 
       function lookupFailed() {
-        console.log("Address lookup failed.");
+        clearAll();
         $('#errors').html("<h5>Sorry</h5>"+
               "<p>Looking up the address failed. <br />"+
               "Make sure it's correct and try again later.</p>");
@@ -189,22 +182,26 @@
         }
       }
 
-      function newSearch() {
-        old_SearchParams = SearchParams;
+      function clearAll() {
         if (Markers) {
           for (var i=0; i < Markers.length; i++) {
             Markers[i].setVisible(false);
             Markers[i].setMap(null);
-            Markers[i] = null;
           }
           Markers.length = 0;
         }
-
         document.getElementById('errors').innerHTML = "";
         for (var i=0; i < {{ config['MAX_RESULTS'] }}; i++) {
           document.getElementById('subtext'+i).innerHTML = "";
           document.getElementById('icon'+i).innerHTML = "";
         }
+      }
+
+      function newSearch() {
+        clearAll();
+
+        old_SearchParams = SearchParams;
+
         $.getJSON("{{ url_for('search') }}?lat="+
                    encodeURIComponent(SearchParams['lat'])+
                    "&lon="+encodeURIComponent(SearchParams['lon'])+
@@ -224,37 +221,35 @@
       function getScoreColor(number) {
         var red;
         var green;
-        if (number < 50) {
-          green = Math.floor(255 * number/50);
+        number = Math.floor(number/10);
+        if (number < 0) {
+          number = 0;
+        } else if (number >= 10) {
+          number = 9;
+        }
+        if (number <= 4) {
+          green = 85*number;
           red = 255;
         } else {
           green = 255;
-          red = Math.floor(255 * ((50 - number%50) / 50));
+          red = 255 - 51*(number - 4);
         }
-        var color = "#" + red.toString(16)+
-                          green.toString(16)+
-                          "00";
+        var rs = red.toString(16);
+        var gs = green.toString(16);
+        if (rs == "0") {
+          rs = "00";
+        }
+        if (gs == "0") {
+          gs = "00";
+        }
+        var color = "#" + rs + gs + "00";
         return color;
-      }
-
-      function getMarkerColor(score) {
-        if (score < 25) {
-          return "red";
-        } else if (score < 50) {
-          return "orange";
-        } else if (score < 75) {
-          return "yellow";
-        } else {
-          return "green";
-        }
       }
 
       function drawMarkers(data, textStatus) {
         var n = data.n;
         map.panTo(new google.maps.LatLng(data.center.lat, data.center.lon));
         map.setZoom(16)
-
-        console.log(JSON.stringify(data));
 
         Markers = new Array(n);
 
@@ -275,12 +270,20 @@
           var safest = result.hasOwnProperty('safest');
           var closest = result.hasOwnProperty('closest');
 
-          var color = getMarkerColor(score);
+          var color = getScoreColor(score);
 
           Markers[i] = new google.maps.Marker({
             position: new google.maps.LatLng(latitude, longitude),
             title: name,
-            icon: 'http://maps.google.com/mapfiles/ms/icons/'+color+'-dot.png',
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: color,
+              fillOpacity: 1.0,
+              scale: 6,
+              strokeColor: 'black',
+              strokeOpacity: 0.5,
+              strokeWeight: 2
+              },
             map: map,
             score: score
           });
@@ -301,8 +304,7 @@
           }
           text += "</p>";
 
-          document.getElementById('subtext'+i).innerHTML = text;
-
+          $('#subtext'+i).html(text);
 
           var textdiv = document.getElementById('text'+i);
           textdiv.style.cursor = 'pointer';
@@ -315,33 +317,67 @@
 
           $(textdiv).mouseover(function() {
             var i = $(this).data('n');
-            Markers[i].setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-            Markers[i].setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+            highlightMarker(Markers[i]);
+            highlightText(i);
           });
 
           $(textdiv).mouseout(function() {
             var i = $(this).data('n');
-            var color = getMarkerColor(Markers[i].score);
-            Markers[i].setIcon('http://maps.google.com/mapfiles/ms/icons/'+color+'-dot.png');
+            unhighlightMarker(Markers[i]);
+            unhighlightText(i);
           });
 
           google.maps.event.addListener(Markers[i], "mouseover", (function(i) {
             return function() {
-              //document.getElementById('subtext'+i).className += "bs-callout bs-callout-info";
-              document.getElementById('text'+i).style.backgroundColor = "rgba(224,255,253,0.5)";
-              document.getElementById('text'+i).style.opactiy = "0.5";
+              highlightMarker(Markers[i]);
+              highlightText(i);
             }
           })(i));
 
           google.maps.event.addListener(Markers[i], "mouseout", (function(i) {
             return function() {
-              //document.getElementById('subtext'+i).className = "container-fluid";
-              document.getElementById('text'+i).style.backgroundColor = "";
+              unhighlightMarker(Markers[i]);
+              unhighlightText(i);
             }
           })(i));
 
         }
       }
+
+    function highlightText(i) {
+      document.getElementById('text'+i).style.backgroundColor = "rgba(200,238,247,0.5)";
+      document.getElementById('text'+i).style.outline = "#555555 dotted thin";
+    }
+
+    function unhighlightText(i) {
+      document.getElementById('text'+i).style.backgroundColor = "";
+      document.getElementById('text'+i).style.outline = "";
+    }
+
+    function highlightMarker(marker) {
+      var color = getScoreColor(marker.score);
+      marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+      marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
+                       fillColor: color,
+                       fillOpacity: 1.0,
+                       scale: 10,
+                       strokeColor: 'black',
+                       strokeOpacity: 0.5,
+                       strokeWeight: 2
+                     });
+    }
+
+    function unhighlightMarker(marker) {
+      var color = getScoreColor(marker.score);
+      marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
+                           fillColor: color,
+                           fillOpacity: 1.0,
+                           scale: 6,
+                           strokeColor: 'black',
+                           strokeOpacity: 0.5,
+                           strokeWeight: 2
+                         });
+    }
 
 		google.maps.event.addDomListener(window, 'load', initialize);
 
