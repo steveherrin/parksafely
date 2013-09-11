@@ -1,5 +1,7 @@
+from __future__ import division
 import psycopg2
 from psycopg2.extras import DictCursor
+import math
 
 class db_interface:
     def __init__(self, **kwargs):
@@ -41,12 +43,24 @@ class db_interface:
             if the database isn't connected. """
         return self.connection.cursor(cursor_factory=DictCursor)
 
-    def get_n_parking(self, vehicle):
+    def get_n_of_parking(self, vehicle):
         """ Returns the total number of parking spots in
             the database for vehicle type"""
         cur = self.dict_cursor
         cur.execute("""SELECT COUNT(*) AS n FROM parking
-                       WHERE vehicle=%s""", (vehicle,))
+                       WHERE vehicle=%s
+                       AND (year_installed != 2013 OR
+                           year_installed IS NULL)""", (vehicle,))
+        return int(cur.fetchone()['n'])
+
+    def get_n_of_crime(self, vehicle):
+        """ Returns the total number of crimes in
+            the database for vehicle type"""
+        cur = self.dict_cursor
+        cur.execute("""SELECT COUNT(*) AS n FROM crimes
+                       WHERE vehicle=%s
+                       AND EXTRACT(YEAR FROM t) < 2013
+                       """, (vehicle,))
         return int(cur.fetchone()['n'])
 
     def get_max_rate(self, vehicle):
@@ -59,6 +73,42 @@ class db_interface:
                        LIMIT 1""", (vehicle,))
         row = cur.fetchone()
         return float(row['rate']), int(row['id'])
+
+    def get_rate_percentile(self, vehicle, percentile):
+        """ Returns the rate for the nth percentile """
+        cur = self.dict_cursor
+        n = self.get_n_of_parking(vehicle)
+        cur.execute("""SELECT rate FROM rates
+                       NATURAL JOIN parking
+                       WHERE vehicle=%s
+                       AND rate IS NOT NULL
+                       ORDER BY rate DESC
+                       LIMIT 1 OFFSET %s""",
+                       (vehicle, math.floor(percentile*n/100)))
+        return float(cur.fetchone()['rate'])
+
+    def get_all_parking(self, vehicle):
+        """ Returns an array of dictionaries describing all parking
+            spots of vehicle type in the database sorted from
+            most dangerous to least dangerous """
+        query = """ SELECT lat, lon, rate, rank, location_name, address
+                    FROM parking
+                    NATURAL JOIN
+                    (SELECT id, rate, rank() OVER (ORDER BY rate DESC)
+                     FROM rates WHERE rate IS NOT NULL) AS rates
+                    WHERE vehicle = %s
+                    AND (year_installed != 2013 OR year_installed IS NULL)
+                    ORDER BY rate DESC """
+        cur = self.dict_cursor
+        cur.execute(query, (vehicle,))
+
+        n_parking = self.get_n_of_parking(vehicle)
+        parking = []
+        for row in cur:
+            spot = dict(row)
+            spot['safescore'] = 100*spot['rank']/n_parking
+            parking.append(spot)
+        return parking
 
     def get_nearby_parking(self, vehicle, point, max_d):
         """ Returns an array of dictionaries describing all parking
@@ -80,7 +130,7 @@ class db_interface:
                            rank
                     FROM parking NATURAL JOIN
                     (SELECT rates.id, rate, rank() OVER (ORDER BY rate DESC)
-                           FROM rates) AS rates
+                           FROM rates WHERE rate IS NOT NULL) AS rates
                     WHERE ST_DWithin(%s, location, %%s)
                     AND (year_installed IS NULL OR year_installed < 2013)
                     AND vehicle=%%s
@@ -89,7 +139,7 @@ class db_interface:
         cur.execute(query, (max_d, vehicle))
 
         parking = []
-        n_parking = self.get_n_parking(vehicle)
+        n_parking = self.get_n_of_parking(vehicle)
         for row in cur:
             spot = dict(row)
             spot['safescore'] = 100*spot['rank']/n_parking

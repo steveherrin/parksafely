@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block body %}
+		<div class="row-fluid">
+		  <div class="span8">
+		    <div class="container-fluid" id="map-canvas"></div>
+		  </div>
+		  <div class="span4">
+		  </div>
+		</div>
+{% endblock %}
+
+{% block scripts %}
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&key={{ config['MAPS_API_KEY'] }}&sensor=false">
+	  </script>
+		<style type="text/css">
+			body { padding-top: 40px; }
+			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
+		</style>
+		<script type="text/javascript">
+
+			var map;
+			var heatMapData;
+      var heatMap;
+
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(37.7833, -122.4167),
+				  zoom: 12,
+				  mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var h = $(window).height();
+        offset = 40;
+        $('#map-canvas').css('height', (h - offset));
+        map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+        $.getJSON("{{ url_for('stats_data') }}", drawData).fail(lookupFailed);
+      }
+
+      function lookupFailed() {
+        clearAll();
+        $('#errors').html("<h5>Sorry</h5>"+
+              "<p>Looking up the address failed. <br />"+
+              "Make sure it's correct and try again later.</p>");
+      }
+
+      function clearAll() {
+        if (heatMapData) {
+          for (var i=0; i < heatMapData.length; i++) {
+            heatMapData[i] = null;
+          }
+          heatMapData.length = 0;
+        }
+        if (heatMap) {
+          heatMap.setMap(null);
+        }
+        document.getElementById('errors').innerHTML = "";
+      }
+
+      function getScoreColor(number) {
+        var red;
+        var green;
+        number = Math.floor(number/10);
+        if (number < 0) {
+          number = 0;
+        } else if (number >= 10) {
+          number = 9;
+        }
+        if (number <= 4) {
+          green = 63*number;
+          red = 255;
+        } else {
+          green = 255;
+          red = 255 - 51*(number - 4);
+        }
+        var rs = red.toString(16);
+        var gs = green.toString(16);
+        if (rs == "0") {
+          rs = "00";
+        }
+        if (gs == "0") {
+          gs = "00";
+        }
+        var color = "#" + rs + gs + "00";
+        return color;
+      }
+
+      function drawData(data) {
+        var n = data.n_parking;
+        heatMapData = new Array(n);
+
+        if (n <= 0) {
+          return lookupFailed();
+        }
+
+        for(var i=0; i<n; i++) {
+          var result = data.results[i];
+          var safescore = result.safescore;
+          var latitude = result.lat;
+          var longitude = result.lon;
+          var color = getScoreColor(safescore);
+
+          heatMapData[i] = {
+              location : new google.maps.LatLng(latitude, longitude),
+              weight: parseFloat(safescore)
+          };
+        }
+      heatMap = new google.maps.visualization.HeatmapLayer({
+                      data : heatMapData,
+                      map : map
+                });
+    }
+
+    function highlightMarker(marker) {
+      var color = getScoreColor(marker.safescore);
+      marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+      marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
+                       fillColor: color,
+                       fillOpacity: 1.0,
+                       scale: 10,
+                       strokeColor: 'black',
+                       strokeOpacity: 0.5,
+                       strokeWeight: 2
+                     });
+    }
+
+    function unhighlightMarker(marker) {
+      var color = getScoreColor(marker.safescore);
+      marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
+                           fillColor: color,
+                           fillOpacity: 1.0,
+                           scale: 6,
+                           strokeColor: 'black',
+                           strokeOpacity: 0.5,
+                           strokeWeight: 2
+                         });
+    }
+
+		google.maps.event.addDomListener(window, 'load', initialize);
+
+		$(window).resize(function () {
+      var h = $(window).height();
+      offset = 40;
+      $('#map-canvas').css('height', (h - offset));
+    }).resize();
+		</script>
+
+{% endblock %}

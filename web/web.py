@@ -109,8 +109,34 @@ def pref_to_scale(x):
     # 10 corresponds to about a 1/6 reduction in risk
     return 0.5*pow(25, float(-x)/18)
 
+@app.route("/stats_data")
+def stats_data():
+    """ Serves up all points and some tidbits
+        in a JSON object for use in a big map """
+    n_crime = get_db().get_n_of_crime('bicycle')
+    parking = get_db().get_all_parking('bicycle')
+    # copy this because we want to return it separately
+    most_dangerous = dict(max(parking, key=itemgetter('rate')))
+    most_dangerous['safescore'] = "%0.0f"%(most_dangerous['safescore'])
+    most_dangerous.pop('rate', None)
+    most_dangerous.pop('rank', None)
+
+    for spot in parking:
+        spot['safescore'] = "%0.0f"%(spot['safescore'])
+        spot.pop('rank', None)
+        spot.pop('rate', None)
+        spot.pop('address', None)
+        spot.pop('location_name', None)
+    return jsonify(status = 'OK',
+                   n_parking = len(parking),
+                   n_crime = n_crime,
+                   results = parking,
+                   most_dangerous = most_dangerous)
+
 @app.route("/search", methods=['GET'])
 def search():
+    """ Serves up a JSON object of the top MAX_RESULTS spots
+        within max_d of point. """
     try:
         point = {"lat": float(request.args['lat']),
                  "lon": float(request.args['lon'])}
@@ -123,7 +149,6 @@ def search():
     rate_scale = pref_to_scale(pref)
 
     parking = get_db().get_nearby_parking('bicycle', point, max_d)
-    max_rate = max((x['rate'] for x in parking))
     for spot in parking:
         spot['metric'] = (abs(spot['distance']/250)
                           + abs(spot['rate']/rate_scale))
@@ -162,6 +187,10 @@ def search():
 @app.route("/map", methods=['GET'])
 def map():
     return render_template("map.html")
+
+@app.route("/stats")
+def stats():
+    return render_template("stats.html")
 
 if __name__ == "__main__":
     app.run()
