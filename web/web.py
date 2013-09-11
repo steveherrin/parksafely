@@ -99,23 +99,28 @@ def format_parking_for_output(parking):
         spot.pop('id', None)
     return parking
 
+def pref_to_scale(x):
+    """ Transforms a -10 to +10 preference where -10
+        is closer and +10 is safer to a scaling factor for the
+        crime rate """
+    # Somewhat arbitrarily chosen.
+    # Want 0 to be in the middle with about 1/3 reduction in risk
+    # 0 corresponds to about a 2/3 reduction in risk
+    # 10 corresponds to about a 1/6 reduction in risk
+    return 0.5*pow(25, float(-x)/18)
+
 @app.route("/search", methods=['GET'])
 def search():
     try:
         point = {"lat": float(request.args['lat']),
                  "lon": float(request.args['lon'])}
         max_d = float(request.args['max_d'])
-        pref = request.args['preference'].lower()
-        if 'safer' in pref:
-            rate_scale = 0.02
-        elif 'closer' in pref:
-            rate_scale = 1.0
-        else:
-            rate_scale = 0.25
+        pref = float(request.args['preference'].lower())
     except ValueError:
         return jsonify(status = 'FAIL',
                        center = point,
                        description = 'Could not parse arguments.')
+    rate_scale = pref_to_scale(pref)
 
     parking = get_db().get_nearby_parking('bicycle', point, max_d)
     max_rate = max((x['rate'] for x in parking))

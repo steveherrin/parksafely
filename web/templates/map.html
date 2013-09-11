@@ -21,11 +21,17 @@
               <div class="control-group">
                 <label class="control-label" for="test">Preference?</label>
                 <div class="controls">
-                  closer
-                  <input type="text" class="input-small" value=""
-                         id="preference" name="preference">
-                  safer
+                  <div class="input-medium" id="preference" name="preference"></div>
                 </div>
+                  <div class="row-fluid">
+                    <div class="span2">
+                      <div class="container-fluid">closer</div>
+                    </div>
+                    <div class="span2 offset2">
+                      <div class="container-fluid">safer</div>
+                    </div>
+                  </div>
+
               </div>
               <div class="control-group">
                 <label class="control-label" for="max_d">Max Distance</label>
@@ -63,8 +69,6 @@
 {% block scripts %}
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ config['MAPS_API_KEY'] }}&sensor=false">
 	  </script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-slider.js') }}">
-    </script>
 		<style type="text/css">
 			body { padding-top: 40px; }
 			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
@@ -89,13 +93,6 @@
 			var SearchParams = {};
 
       function initialize() {
-        $('#preference').slider({
-            min: -10,
-            max: 10,
-            value: 0,
-            step: 1,
-            tooltip: 'hide'
-            }).on('slideStop', preference_changed);
         var mapOptions = {
           center: new google.maps.LatLng(37.7833, -122.4167),
 				  zoom: 12,
@@ -117,17 +114,27 @@
         }
         if ($.url().param('preference') != undefined) {
           SearchParams['preference'] = $.url().param('preference');
-          $("#preference").data('slider').setValue(SearchParams['preference']);
         } else {
-          $("#preference").data('slider').setValue(0);
+          SearchParams['preference'] = 0;
         }
+        console.log(SearchParams['preference']);
+        $('#preference').slider({
+            min: -10,
+            max: 10,
+            value: SearchParams['preference'],
+            step: 1,
+            tooltip: 'hide',
+            stop: preference_changed
+        });
+        console.log($('#preference').slider("value"));
       }
+
 
       window.onpopstate = function(event) {
         if (event.state) {
           SearchParams = event.state;
           $("#max_d").val(SearchParams['max_d']);
-          $("#preference").data('slider').setValue(SearchParams['preference']);
+          $("#preference").slider("value", SearchParams['preference']);
           newSearch();
         }
       }
@@ -153,15 +160,16 @@
       }
 
       function preference_changed() {
-        SearchParams['preference'] = $("#preference").data('slider').getValue();
+        SearchParams['preference'] = $("#preference").slider("value");
+        console.log("Pref changed." + SearchParams['preference']);
         newSearch();
       }
 
       function lookupFailed() {
         console.log("Address lookup failed.");
-        document.getElementById('errors').innerHTML = "<h5>Sorry</h5>"+
+        $('#errors').html("<h5>Sorry</h5>"+
               "<p>Looking up the address failed. <br />"+
-              "Make sure it's correct and try again later.</p>";
+              "Make sure it's correct and try again later.</p>");
       }
 
       function update_coords(geo_data) {
@@ -176,7 +184,7 @@
           SearchParams['lat'] = loc.lat;
           SearchParams['lon'] = loc.lng;
           var form_add = geo_data.results[0].formatted_address;
-          document.getElementById('address').value = form_add.split(',')[0]
+          $('#address').val(form_add.split(',')[0])
           newSearch();
         }
       }
@@ -185,7 +193,9 @@
         old_SearchParams = SearchParams;
         if (Markers) {
           for (var i=0; i < Markers.length; i++) {
+            Markers[i].setVisible(false);
             Markers[i].setMap(null);
+            Markers[i] = null;
           }
           Markers.length = 0;
         }
