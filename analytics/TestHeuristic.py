@@ -53,6 +53,7 @@ r_w = float(sys.argv[1])
 
 extra_ds = []
 risk_factors = []
+n_zeros = 0
 
 for crime in cur:
 
@@ -64,7 +65,7 @@ for crime in cur:
     if len(parking) == 0:
         continue
     for spot in parking:
-        spot['metric'] = (spot['distance']/250)**2 + (spot['rate']/r_w)**2
+        spot['metric'] = abs(spot['distance']/250)**2 + abs(spot['rate']/r_w)**2
 
     best = min(parking, key=itemgetter('metric'))
     closest = min(parking, key=itemgetter('distance'))
@@ -75,6 +76,7 @@ for crime in cur:
     #print best['rate'], best['distance'], rate_there
 
     if closest['rate'] == 0:
+        n_zeros +=1
         continue
     else:
         risk_factors.append(best['rate']/closest['rate'])
@@ -85,4 +87,4 @@ risk_factors.sort(reverse = True)
 print "Using top pick:"
 print "  walk %0.3f more on average"%(np.mean(extra_ds))
 print "  risk is muliplied by %0.3e on average"%(np.mean(risk_factors))
-
+print "  There were %i zeros."%(n_zeros)
