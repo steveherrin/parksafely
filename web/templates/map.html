@@ -19,13 +19,12 @@
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="max_d">Preference?</label>
+                <label class="control-label" for="test">Preference?</label>
                 <div class="controls">
-                  <select id="preference" name="preference" class="input-small" onchange="preference_changed()">
-                    <option value='safer'>Safer</option>
-                    <option selected='selected' value='none'>None</option>
-                    <option value='closer'>Closer</option>
-                  </select>
+                  closer
+                  <input type="text" class="input-small" value=""
+                         id="preference" name="preference">
+                  safer
                 </div>
               </div>
               <div class="control-group">
@@ -64,6 +63,8 @@
 {% block scripts %}
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ config['MAPS_API_KEY'] }}&sensor=false">
 	  </script>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-slider.js') }}">
+    </script>
 		<style type="text/css">
 			body { padding-top: 40px; }
 			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
@@ -88,6 +89,13 @@
 			var SearchParams = {};
 
       function initialize() {
+        $('#preference').slider({
+            min: -10,
+            max: 10,
+            value: 0,
+            step: 1,
+            tooltip: 'hide'
+            }).on('slideStop', preference_changed);
         var mapOptions = {
           center: new google.maps.LatLng(37.7833, -122.4167),
 				  zoom: 12,
@@ -109,9 +117,9 @@
         }
         if ($.url().param('preference') != undefined) {
           SearchParams['preference'] = $.url().param('preference');
-          $("#preference").val(SearchParams['preference']);
+          $("#preference").data('slider').setValue(SearchParams['preference']);
         } else {
-          SearchParams['preference'] = "none";
+          $("#preference").data('slider').setValue(0);
         }
       }
 
@@ -119,7 +127,7 @@
         if (event.state) {
           SearchParams = event.state;
           $("#max_d").val(SearchParams['max_d']);
-          $("#preference").val(SearchParams['preference']);
+          $("#preference").data('slider').setValue(SearchParams['preference']);
           newSearch();
         }
       }
@@ -136,16 +144,16 @@
 
 
       function address_changed() {
-        update_address(document.getElementById('address').value);
+        update_address($('#address').val());
       }
 
       function max_d_changed() {
-        SearchParams['max_d'] = document.getElementById('max_d').value;
+        SearchParams['max_d'] = $('#max_d').val();
         newSearch();
       }
 
       function preference_changed() {
-        SearchParams['preference'] = document.getElementById('preference').value;
+        SearchParams['preference'] = $("#preference").data('slider').getValue();
         newSearch();
       }
 
