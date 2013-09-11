@@ -19,17 +19,27 @@
                 </div>
               </div>
               <div class="control-group">
-                <label class="control-label" for="max_d">Max Distance</label>
-                  <div class="controls">
-                    <select id="max_d" name="max_d" class="input-small" onchange="max_d_changed()">
-                      <option value=160.9>0.10 mi</option>
-                      <option value=241.4>0.15 mi</option>
-                      <option value=321.9>0.20 mi</option>
-                      <option selected="selected" value=402.9>0.25 mi</option>
-                      <option value=804.7>0.50 mi</option>
-                    </select>
-                  </div>
+                <label class="control-label" for="max_d">Preference?</label>
+                <div class="controls">
+                  <select id="preference" name="preference" class="input-small" onchange="preference_changed()">
+                    <option value='safer'>Safer</option>
+                    <option selected='selected' value='none'>None</option>
+                    <option value='closer'>Closer</option>
+                  </select>
                 </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="max_d">Max Distance</label>
+                <div class="controls">
+                  <select id="max_d" name="max_d" class="input-small" onchange="max_d_changed()">
+                    <option value=160.9>0.10 mi</option>
+                    <option value=241.4>0.15 mi</option>
+                    <option value=321.9>0.20 mi</option>
+                    <option selected="selected" value=402.9>0.25 mi</option>
+                    <option value=804.7>0.50 mi</option>
+                  </select>
+                </div>
+              </div>
              </fieldset>
             </div>
         </div>
@@ -96,6 +106,11 @@
         } else {
           SearchParams['max_d'] = 402.9;
         }
+        if ($.url().param('preference') != undefined) {
+          SearchParams['preference'] = $.url().param('preference');
+        } else {
+          SearchParams['preference'] = "none";
+        }
       }
 
       window.onpopstate = function(event) {
@@ -122,6 +137,11 @@
 
       function max_d_changed() {
         SearchParams['max_d'] = document.getElementById('max_d').value;
+        newSearch();
+      }
+
+      function preference_changed() {
+        SearchParams['preference'] = document.getElementById('preference').value;
         newSearch();
       }
 
@@ -166,14 +186,17 @@
         $.getJSON("{{ url_for('search') }}?lat="+
                    encodeURIComponent(SearchParams['lat'])+
                    "&lon="+encodeURIComponent(SearchParams['lon'])+
-                   "&max_d="+encodeURIComponent(SearchParams['max_d']), drawMarkers)
-             .fail(lookupFailed);
+                   "&max_d="+encodeURIComponent(SearchParams['max_d'])+
+                   "&preference="+encodeURIComponent(SearchParams['preference']),
+                   drawMarkers).fail(lookupFailed);
         window.history.pushState(old_SearchParams,
                                 "map",
                                 "{{ url_for('map') }}?address="+
                                 encodeURIComponent(old_SearchParams['address_string'])+
                                 "&max_d="+
-                                encodeURIComponent(old_SearchParams['max_d']));
+                                encodeURIComponent(old_SearchParams['max_d'])+
+                                "&preference="+
+                                encodeURIComponent(old_SearchParams['preference']));
       }
 
       function getScoreColor(number) {

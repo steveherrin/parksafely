@@ -68,8 +68,8 @@ def prettify_str(name):
     # Fix title casing for ordinal numbers (e.g. 4Th)
     name = re.sub(r'[0-9][SNRT]', lambda m: m.group(0).lower(), name)
     # Fix title casing for possessive
-    name = re.sub(r'\'S(\s|$)', lambda m: m.group(0).lower(), name)
-
+    name = re.sub(r'\'S(\s|$|\W)', lambda m: m.group(0).lower(), name)
+    # TODO:
     return name
 
 def pick_name_address(name, address):
@@ -106,6 +106,13 @@ def search():
         point = {"lat": float(request.args['lat']),
                  "lon": float(request.args['lon'])}
         max_d = float(request.args['max_d'])
+        pref = request.args['preference'].lower()
+        if 'safer' in pref:
+            rate_scale = 0.02
+        elif 'closer' in pref:
+            rate_scale = 1.0
+        else:
+            rate_scale = 0.25
     except ValueError:
         return jsonify(status = 'FAIL',
                        center = point,
@@ -114,7 +121,8 @@ def search():
     parking = get_db().get_nearby_parking('bicycle', point, max_d)
     max_rate = max((x['rate'] for x in parking))
     for spot in parking:
-        spot['metric'] = (spot['distance']/250)**2 + (spot['rate']/1.1)**2
+        spot['metric'] = (abs(spot['distance']/250)
+                          + abs(spot['rate']/rate_scale))
     if len(parking) > 0:
         safest = max(parking, key=itemgetter('safescore'))
         closest = min(parking, key=itemgetter('distance'))
