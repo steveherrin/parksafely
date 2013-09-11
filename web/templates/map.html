@@ -103,11 +103,13 @@
         }
         if ($.url().param('max_d') != undefined) {
           SearchParams['max_d'] = $.url().param('max_d');
+          $("#max_d").val(SearchParams['max_d']);
         } else {
           SearchParams['max_d'] = 402.9;
         }
         if ($.url().param('preference') != undefined) {
           SearchParams['preference'] = $.url().param('preference');
+          $("#preference").val(SearchParams['preference']);
         } else {
           SearchParams['preference'] = "none";
         }
@@ -116,6 +118,8 @@
       window.onpopstate = function(event) {
         if (event.state) {
           SearchParams = event.state;
+          $("#max_d").val(SearchParams['max_d']);
+          $("#preference").val(SearchParams['preference']);
           newSearch();
         }
       }
