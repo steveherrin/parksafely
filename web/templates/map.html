@@ -66,22 +66,6 @@
 {% block scripts %}
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={{ config['MAPS_API_KEY'] }}&sensor=false">
 	  </script>
-		<style type="text/css">
-			body { padding-top: 40px; }
-			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
-			.form-small .control-label { width: 100px; }
-      .form-small .controls { margin-left: 120px; }
-      .saferank0 { color: #FF0000; }
-      .saferank1 { color: #FF5500; }
-      .saferank2 { color: #FFAA00; }
-      .saferank3 { color: #FFCC00; }
-      .saferank4 { color: #FFFF00; }
-      .saferank5 { color: #CCFF00; }
-      .saferank6 { color: #99FF00; }
-      .saferank7 { color: #66FF00; }
-      .saferank8 { color: #33FF00; }
-      .saferank9 { color: #00FF00; }
-		</style>
 		<script type="text/javascript">
 
 			var map;
@@ -95,7 +79,7 @@
 				  mapTypeId: google.maps.MapTypeId.ROADMAP
         };
         var h = $(window).height();
-        offset = 40;
+        var offset = 40;
         $('#map-canvas').css('height', (h - offset));
         map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
         if ($.url().param('address') != undefined) {
@@ -199,7 +183,7 @@
       function newSearch() {
         clearAll();
 
-        old_SearchParams = SearchParams;
+        var old_SearchParams = SearchParams;
 
         $.getJSON("{{ url_for('search') }}?lat="+
                    encodeURIComponent(SearchParams['lat'])+
@@ -382,7 +366,7 @@
 
 		$(window).resize(function () {
       var h = $(window).height();
-      offset = 40;
+      var offset = 40;
       $('#map-canvas').css('height', (h - offset));
     }).resize();
 		</script>

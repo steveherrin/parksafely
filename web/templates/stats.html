@@ -1,152 +1,157 @@
 {% extends "layout.html" %}
 
 {% block body %}
-		<div class="row-fluid">
-		  <div class="span8">
-		    <div class="container-fluid" id="map-canvas"></div>
-		  </div>
-		  <div class="span4">
-        <h3>The Data</h3>
-        <div class="container-fluid">
-          There were <b>{{ n_parking }}</b> documented bicycle racks installed in the city of San Francisco at the beginning of 2013.
-          <br /><br />
-          Between 2003 and 2013, there were <b>{{ n_crime }}</b> reported bicycle thefts or attempted thefts in San Francisco.
-          <br /><br />
-          The map to the left shows the areas of the city with the highest density of bicycle theft.
-          <br />
-        </div>
-        <h3>Worst Location</h3>
-        <div class="container-fluid">
-          Currently, the worst place to park your bike in San Francisco is:<br />
-          <div class="container-fluid" id="worst_spot"></div>
-        </div>
-        <h3>Why Use This App?</h3>
-        <div class="container-fluid">
-          Suppose that the bikes reported stolen in 2013 had been parked using recommendations from this app. On average:<br />
-          <div class="container-fluid" id="why_use_app">Theft risk reduced by <b>{{ risk_reduction }}%</b>.
-            <br/ >Walk only <b>{{ avg_extra_d }} ft</b> more.
-          </div>
-        </div>
-		  </div>
-		</div>
+  <div class="row-fluid">
+    <div class="span8">
+      <div class="container-fluid" id="map-canvas"></div>
+    </div>
+	<div class="span4">
+    <h3>The Data</h3>
+    <div class="container-fluid">
+      There were <b>{{ n_parking }}</b> documented bicycle racks installed in the city of San Francisco at the beginning of 2013.
+      <br /><br />
+      Between 2003 and 2013, there were <b>{{ n_crime }}</b> reported bicycle thefts or attempted thefts in San Francisco.
+      <br /><br />
+      The map to the left shows the areas of the city with the highest density of bicycle theft.
+      <br />
+    </div>
+    <h3>Worst Location</h3>
+    <div class="container-fluid">
+      Currently, the worst place to park your bike in San Francisco is:<br />
+      <div class="container-fluid" id="worst_spot"></div>
+    </div>
+    <h3>Why Use This App?</h3>
+    <div class="container-fluid">
+      Suppose that the bikes reported stolen in 2013 had been parked using recommendations from this app. On average:<br />
+      <div class="container-fluid" id="why_use_app">
+        Theft risk reduced by <b>{{ risk_reduction }}%</b>.
+        <br/ >Walk only <b>{{ avg_extra_d }} ft</b> more.
+      </div>
+    </div>
+	</div>
 {% endblock %}
 
 {% block scripts %}
-		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&key={{ config['MAPS_API_KEY'] }}&sensor=false">
-	  </script>
-		<style type="text/css">
-			body { padding-top: 40px; }
-			#map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
-		</style>
-		<script type="text/javascript">
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&key={{ config['MAPS_API_KEY'] }}&sensor=false">
+  </script>
+  <script type="text/javascript">
 
-			var map;
-			var heatMapData;
-      var heatMap;
+    var map;
+    var heatMapData;
+    var heatMap;
+    var worstMarker;
 
-      function initialize() {
-        var mapOptions = {
-          center: new google.maps.LatLng(37.755906, -122.441597),
-				  zoom: 12,
-				  mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-        var h = $(window).height();
-        offset = 40;
-        $('#map-canvas').css('height', (h - offset));
-        map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-        $.getJSON("{{ url_for('stats_data') }}", drawData).fail(lookupFailed);
-      }
+    function initialize() {
+      var mapOptions = {
+        center: new google.maps.LatLng(37.755906, -122.441597),
+        zoom: 12,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      var h = $(window).height();
+      var offset = 40;
+      $('#map-canvas').css('height', (h - offset));
+      map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+      $.getJSON("{{ url_for('stats_data') }}", drawData).fail(lookupFailed);
+    }
 
-      function lookupFailed() {
-        clearAll();
-        $('#errors').html("<h5>Sorry</h5>"+
+    function lookupFailed() {
+      clearAll();
+      $('#errors').html("<h5>Sorry</h5>"+
               "<p>Looking up the address failed. <br />"+
               "Make sure it's correct and try again later.</p>");
+    }
+
+    function clearAll() {
+      if (heatMapData) {
+        for (var i=0; i < heatMapData.length; i++) {
+          heatMapData[i] = null;
+        }
+        heatMapData.length = 0;
+      }
+      if (heatMap) {
+        heatMap.setMap(null);
+      }
+      if (worstMarker) {
+        worstMarker.setMap(null);
+      }
+      //document.getElementById('errors').innerHTML = "";
+    }
+
+    function drawData(data) {
+      var n = data.n_parking;
+      heatMapData = new Array(n);
+
+      if (n <= 0) {
+        return lookupFailed();
       }
 
-      function clearAll() {
-        if (heatMapData) {
-          for (var i=0; i < heatMapData.length; i++) {
-            heatMapData[i] = null;
-          }
-          heatMapData.length = 0;
-        }
-        if (heatMap) {
-          heatMap.setMap(null);
-        }
-        document.getElementById('errors').innerHTML = "";
+      for(var i=0; i<n; i++) {
+        var result = data.results[i];
+        var safescore = result.safescore;
+        var latitude = result.lat;
+        var longitude = result.lon;
+
+        heatMapData[i] = {
+          location : new google.maps.LatLng(latitude, longitude),
+          weight: parseFloat(safescore)
+        };
       }
 
-      function drawData(data) {
-        var n = data.n_parking;
-        heatMapData = new Array(n);
-
-        if (n <= 0) {
-          return lookupFailed();
-        }
-
-        var text = '<b>' + data.most_dangerous.location_name + '</b><br />';
-        if (data.most_dangerous.address) {
-          text += data.most_dangerous.address + '<br />';
-        } else {
-          text += '&nbsp;<br />';
-        }
-        $('#worst_spot').html(text);
-
-        worst_marker = new google.maps.Marker({
-          position: new google.maps.LatLng(data.most_dangerous.lat,
-                                           data.most_dangerous.lon),
-          title: data.most_dangerous.name,
-          icon: {
-            fillColor: 'red',
-            fillOpacity: 1.0,
-            scale: 6,
-            strokeColor: 'black',
-            strokeOpacity: 0.5,
-            strokeWeight: 2
-          },
-          map : map
-        });
-
-        $("#worst_spot").click(function() {
-            map.panTo(worst_marker.getPosition());
-        });
-
-        $("#worst_spot").mouseover(function() {
-            highlightMarker(worst_marker);
-            highlightText($(this));
-        });
-
-        $("#worst_spot").mouseout(function() {
-            unhighlightMarker(worst_marker);
-            unhighlightText($(this));
-        });
-
-        google.maps.event.addListener(worst_marker, "mouseover", function() {
-            highlightMarker(worst_marker);
-            highlightText($("#worst_spot"));
-        });
-
-        google.maps.event.addListener(worst_marker, "mouseout", function() {
-            unhighlightMarker(worst_marker);
-            unhighlightText($("#worst_spot"));
-        });
-
-        for(var i=0; i<n; i++) {
-          var result = data.results[i];
-          var safescore = result.safescore;
-          var latitude = result.lat;
-          var longitude = result.lon;
-
-          heatMapData[i] = {
-              location : new google.maps.LatLng(latitude, longitude),
-              weight: parseFloat(safescore)
-          };
-        }
       heatMap = new google.maps.visualization.HeatmapLayer({
-                      data : heatMapData,
-                      map : map
-                });
+                    data : heatMapData,
+                    map : map
+              });
+
+      var text = '<b>' + data.most_dangerous.location_name + '</b><br />';
+      if (data.most_dangerous.address) {
+        text += data.most_dangerous.address + '<br />';
+      } else {
+        text += '&nbsp;<br />';
+      }
+      $('#worst_spot').html(text);
+
+      var worstPos = new google.maps.LatLng(data.most_dangerous.lat,
+                                            data.most_dangerous.lon);
+      worstMarker = new google.maps.Marker({
+        position: new google.maps.LatLng(data.most_dangerous.lat,
+                                         data.most_dangerous.lon),
+        title: data.most_dangerous.name,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: 'red',
+          fillOpacity: 1.0,
+          scale: 6,
+          strokeColor: 'black',
+          strokeOpacity: 0.5,
+          strokeWeight: 2
+        },
+        map : map
+      });
+
+      $("#worst_spot").click(function() {
+        map.panTo(worstMarker.getPosition());
+      });
+
+      $("#worst_spot").mouseover(function() {
+        highlightMarker(worstMarker);
+        highlightText($(this));
+      });
+
+      $("#worst_spot").mouseout(function() {
+        unhighlightMarker(worstMarker);
+        unhighlightText($(this));
+      });
+
+      //google.maps.event.addListener(worstMarker, "mouseover", function() {
+      //    highlightMarker(worstMarker);
+      //    highlightText($("#worst_spot"));
+      //});
+
+      //google.maps.event.addListener(worstMarker, "mouseout", function() {
+      //    unhighlightMarker(worstMarker);
+      //    unhighlightText($("#worst_spot"));
+      //});
+
     }
 
     function highlightText(textDiv) {
@@ -190,9 +195,9 @@
 
 		$(window).resize(function () {
       var h = $(window).height();
-      offset = 40;
+      var offset = 40;
       $('#map-canvas').css('height', (h - offset));
     }).resize();
-		</script>
+	</script>
 
 {% endblock %}
