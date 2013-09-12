@@ -41,7 +41,8 @@ cur = db.cursor
 # Pick half of the bike crimes this year to test on
 cur.execute("""SELECT incident_num,
                       ST_X(ST_Transform(location, 4326)) AS lon,
-                      ST_Y(ST_Transform(location, 4326)) AS lat
+                      ST_Y(ST_Transform(location, 4326)) AS lat,
+                      at_police_station
                FROM crimes
                WHERE vehicle='bicycle'
                AND EXTRACT(YEAR FROM t) >= 2013
@@ -60,6 +61,10 @@ for crime in cur:
     point = { 'lon' : float(crime[1]),
               'lat' : float(crime[2])}
     incident_num = crime[0]
+    if crime[3]:
+        # Ignore suff reported at the Hall of Justice
+        # Since that really could be anywhere
+        continue
 
     parking = db.get_nearby_parking('bicycle', point, max_d)
     if len(parking) == 0:
@@ -88,3 +93,11 @@ print "Using top pick:"
 print "  walk %0.3f more on average"%(np.mean(extra_ds))
 print "  risk is muliplied by %0.3e on average"%(np.mean(risk_factors))
 print "  There were %i zeros."%(n_zeros)
+
+db.cursor.execute(""" INSERT INTO recommendation_stats (rate_scale,
+                                                     avg_extra_distance,
+                                                     risk_ratio)
+                      VALUES (%s, %s, %s) """,
+                      (r_w, np.mean(extra_ds), np.mean(risk_factors)))
+db.connection.commit()
+

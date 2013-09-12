@@ -17,7 +17,9 @@ outer_cur.execute("TRUNCATE TABLE rates")
 
 # Probably could stack subquerires inside of subqueries
 # instead of looping, but this logic is clearer to me
-outer_cur.execute("SELECT id, vehicle FROM parking ORDER BY id")
+outer_cur.execute(""" SELECT id, vehicle, location_name FROM parking
+                      WHERE year_installed IS NULL
+                      OR year_installed != 2013 ORDER BY id""")
 for parking_spot in outer_cur:
     id = int(parking_spot[0])
 
@@ -42,6 +44,7 @@ for parking_spot in outer_cur:
                                 FROM crimes,
                                 (SELECT location, vehicle FROM parking WHERE id=%s) AS park
                                 WHERE crimes.vehicle=park.vehicle
+                                AND NOT at_police_station
                                 AND EXTRACT(YEAR FROM t) < 2013
                                 AND ST_DWithin(park.location, crimes.location, %s)""",
                             (id, max_d))
@@ -52,11 +55,10 @@ for parking_spot in outer_cur:
         except TypeError:
             n_crimes_t = 0
 
-        rate = n_crimes/n_spots
+        rate = n_crimes_t/n_spots
 
     inner_cur.execute("""INSERT INTO rates (id, rate)
                        VALUES (%s, %s)""", (id, rate))
 
     conn.commit()
-
 conn.close()

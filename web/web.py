@@ -91,7 +91,10 @@ def format_parking_for_output(parking):
          spot['address']) = pick_name_address(spot['location_name'], spot['address'])
         spot['safescore'] = "%0.0f"%(spot['safescore'])
         # 1 mile = 1609.344 m
-        spot['distance'] = "%0.2f mi"%(spot['distance']/1609.344)
+        try:
+            spot['distance'] = "%0.2f mi"%(spot['distance']/1609.344)
+        except KeyError:
+            pass
         # Don't waste bandwidth on these
         spot.pop('metric', None)
         spot.pop('rank', None)
@@ -113,13 +116,10 @@ def pref_to_scale(x):
 def stats_data():
     """ Serves up all points and some tidbits
         in a JSON object for use in a big map """
-    n_crime = get_db().get_n_of_crime('bicycle')
     parking = get_db().get_all_parking('bicycle')
     # copy this because we want to return it separately
     most_dangerous = dict(max(parking, key=itemgetter('rate')))
-    most_dangerous['safescore'] = "%0.0f"%(most_dangerous['safescore'])
-    most_dangerous.pop('rate', None)
-    most_dangerous.pop('rank', None)
+    most_dangerous = format_parking_for_output([most_dangerous])[0]
 
     for spot in parking:
         spot['safescore'] = "%0.0f"%(spot['safescore'])
@@ -129,7 +129,6 @@ def stats_data():
         spot.pop('location_name', None)
     return jsonify(status = 'OK',
                    n_parking = len(parking),
-                   n_crime = n_crime,
                    results = parking,
                    most_dangerous = most_dangerous)
 
@@ -190,7 +189,17 @@ def map():
 
 @app.route("/stats")
 def stats():
-    return render_template("stats.html")
+    n_crime = get_db().get_n_of_crime('bicycle')
+    n_parking = get_db().get_n_of_parking('bicycle')
+    # Get stats for default preference
+    stats = get_db().get_recommendation_stats(pref_to_scale(0))
+    return render_template("stats.html",
+                            n_crime = n_crime,
+                            n_parking = n_parking,
+                            # 1 meter = 3.281 f
+                            avg_extra_d = "%0.0f"%(3.281*stats['avg_extra_distance']),
+                            risk_reduction = "%0.1f"%
+                                             (100*(1-stats['risk_ratio'])))
 
 if __name__ == "__main__":
     app.run()

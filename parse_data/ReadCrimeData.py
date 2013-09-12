@@ -4,7 +4,7 @@ import psycopg2
 import glob
 from db_info import conn_string
 
-def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon):
+def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, address):
     """ Writes the crime to the database specified in conn, with the
         rest of the arguments giving the crime information. Returns the
         number of crimes actually inserted (will be 0 if the crime's
@@ -14,12 +14,14 @@ def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon):
     timestamp = date + " " + time + " America/Los_Angeles"
     geom = "ST_GeometryFromText('POINT(%f %f)', 4326)"%(lon, lat)
     location = "ST_Transform(%s, 26943)"%(geom)
-
+    at_police_station = (address == '800 Block of BRYANT ST')
     try:
         cursor.execute("""INSERT INTO crimes
-            (incident_num, t, vehicle, severity, location)
-            VALUES (%s, %s, %s, %s, """ + location + ")",
-            (incident_num, timestamp, vehicle, severity))
+            (incident_num, t, vehicle, severity,
+             location, address, at_police_station)
+            VALUES (%s, %s, %s, %s, """ + location + ", %s, %s)",
+            (incident_num, timestamp, vehicle,
+             severity, address, ))
     except psycopg2.IntegrityError:
         # First, roll it back
         conn.rollback()
@@ -88,9 +90,10 @@ if __name__ == "__main__":
                     time = row["Time"]
                     lat = float(row["Y"])
                     lon = float(row["X"])
+                    address = row['Location']
 
                     n_csv += writeCrimeToDB(conn, incident_num, info['vehicle'],
-                                    info['severity'], date, time, lat, lon)
+                                    info['severity'], date, time, lat, lon, address)
 
     for file_name in glob.iglob("data/CrimeIncident90*.kml"):
         tree = ET.parse(file_name)
@@ -113,9 +116,10 @@ if __name__ == "__main__":
                 coord = point.find(prefix + 'coordinates').text.split(',')
                 lat = float(coord[1])
                 lon = float(coord[0])
+                address = None # TODO: Fix this
 
                 n_kml += writeCrimeToDB(conn, incident_num, info['vehicle'],
-                            info['severity'], date, time, lat, lon)
+                            info['severity'], date, time, lat, lon, address)
 
     print("Read %i entries."%(n_csv + n_kml))
     print("  %i from the csv files."%(n_csv))

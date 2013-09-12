@@ -87,6 +87,15 @@ class db_interface:
                        (vehicle, math.floor(percentile*n/100)))
         return float(cur.fetchone()['rate'])
 
+    def get_recommendation_stats(self, rate_scale):
+        cur = self.dict_cursor
+        cur.execute(""" SELECT avg_extra_distance,
+                               risk_ratio
+                        FROM recommendation_stats
+                        WHERE rate_scale = %s """,
+                        (rate_scale,))
+        return dict(cur.fetchone())
+
     def get_all_parking(self, vehicle):
         """ Returns an array of dictionaries describing all parking
             spots of vehicle type in the database sorted from

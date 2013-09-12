@@ -6,6 +6,27 @@
 		    <div class="container-fluid" id="map-canvas"></div>
 		  </div>
 		  <div class="span4">
+        <h3>The Data</h3>
+        <div class="container-fluid">
+          There were <b>{{ n_parking }}</b> documented bicycle racks installed in the city of San Francisco at the beginning of 2013.
+          <br /><br />
+          Between 2003 and 2013, there were <b>{{ n_crime }}</b> reported bicycle thefts or attempted thefts in San Francisco.
+          <br /><br />
+          The map to the left shows the areas of the city with the highest density of bicycle theft.
+          <br />
+        </div>
+        <h3>Worst Location</h3>
+        <div class="container-fluid">
+          Currently, the worst place to park your bike in San Francisco is:<br />
+          <div class="container-fluid" id="worst_spot"></div>
+        </div>
+        <h3>Why Use This App?</h3>
+        <div class="container-fluid">
+          Suppose that the bike stolen in 2013 had been parked using the default recommendation from this app. On average:<br />
+          <div class="container-fluid" id="why_use_app">Theft risk reduced by <b>{{ risk_reduction }}%</b>.
+            <br/ >Walk only <b>{{ avg_extra_d }} ft</b> more.
+          </div>
+        </div>
 		  </div>
 		</div>
 {% endblock %}
@@ -25,7 +46,7 @@
 
       function initialize() {
         var mapOptions = {
-          center: new google.maps.LatLng(37.7833, -122.4167),
+          center: new google.maps.LatLng(37.755906, -122.441597),
 				  zoom: 12,
 				  mapTypeId: google.maps.MapTypeId.ROADMAP
         };
@@ -56,34 +77,6 @@
         document.getElementById('errors').innerHTML = "";
       }
 
-      function getScoreColor(number) {
-        var red;
-        var green;
-        number = Math.floor(number/10);
-        if (number < 0) {
-          number = 0;
-        } else if (number >= 10) {
-          number = 9;
-        }
-        if (number <= 4) {
-          green = 63*number;
-          red = 255;
-        } else {
-          green = 255;
-          red = 255 - 51*(number - 4);
-        }
-        var rs = red.toString(16);
-        var gs = green.toString(16);
-        if (rs == "0") {
-          rs = "00";
-        }
-        if (gs == "0") {
-          gs = "00";
-        }
-        var color = "#" + rs + gs + "00";
-        return color;
-      }
-
       function drawData(data) {
         var n = data.n_parking;
         heatMapData = new Array(n);
@@ -92,12 +85,58 @@
           return lookupFailed();
         }
 
+        var text = '<b>' + data.most_dangerous.location_name + '</b><br />';
+        if (data.most_dangerous.address) {
+          text += data.most_dangerous.address + '<br />';
+        } else {
+          text += '&nbsp;<br />';
+        }
+        $('#worst_spot').html(text);
+
+        worst_marker = new google.maps.Marker({
+          position: new google.maps.LatLng(data.most_dangerous.lat,
+                                           data.most_dangerous.lon),
+          title: data.most_dangerous.name,
+          icon: {
+            fillColor: 'red',
+            fillOpacity: 1.0,
+            scale: 6,
+            strokeColor: 'black',
+            strokeOpacity: 0.5,
+            strokeWeight: 2
+          },
+          map : map
+        });
+
+        $("#worst_spot").click(function() {
+            map.panTo(worst_marker.getPosition());
+        });
+
+        $("#worst_spot").mouseover(function() {
+            highlightMarker(worst_marker);
+            highlightText($(this));
+        });
+
+        $("#worst_spot").mouseout(function() {
+            unhighlightMarker(worst_marker);
+            unhighlightText($(this));
+        });
+
+        google.maps.event.addListener(worst_marker, "mouseover", function() {
+            highlightMarker(worst_marker);
+            highlightText($("#worst_spot"));
+        });
+
+        google.maps.event.addListener(worst_marker, "mouseout", function() {
+            unhighlightMarker(worst_marker);
+            unhighlightText($("#worst_spot"));
+        });
+
         for(var i=0; i<n; i++) {
           var result = data.results[i];
           var safescore = result.safescore;
           var latitude = result.lat;
           var longitude = result.lon;
-          var color = getScoreColor(safescore);
 
           heatMapData[i] = {
               location : new google.maps.LatLng(latitude, longitude),
@@ -110,11 +149,24 @@
                 });
     }
 
+    function highlightText(textDiv) {
+      textDiv.css("background-color","rgba(200,238,247,0.5)");
+      textDiv.css("outline-color", "#555555");
+      textDiv.css("outline-style", "dotted");
+      textDiv.css("outline-width", "thin");
+    }
+
+    function unhighlightText(textDiv) {
+      textDiv.css("background-color","");
+      textDiv.css("outline-color", "");
+      textDiv.css("outline-style", "");
+      textDiv.css("outline-width", "");
+    }
+
     function highlightMarker(marker) {
-      var color = getScoreColor(marker.safescore);
       marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
       marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
-                       fillColor: color,
+                       fillColor: "#FF0000",
                        fillOpacity: 1.0,
                        scale: 10,
                        strokeColor: 'black',
@@ -124,9 +176,8 @@
     }
 
     function unhighlightMarker(marker) {
-      var color = getScoreColor(marker.safescore);
       marker.setIcon({ path: google.maps.SymbolPath.CIRCLE,
-                           fillColor: color,
+                           fillColor: "#FF0000",
                            fillOpacity: 1.0,
                            scale: 6,
                            strokeColor: 'black',
