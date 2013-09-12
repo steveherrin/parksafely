@@ -157,11 +157,11 @@ def search():
         safest['safest'] = True
         closest['closest'] = True
 
-        suggested = [safest]
-        parking.remove(safest)
-        if safest != closest:
-            suggested.append(closest)
-            parking.remove(closest)
+        suggested = [closest]
+        parking.remove(closest)
+        #if safest != closest:
+        #    suggested.append(safest)
+        #    parking.remove(safest)
 
         # Basically we want a list of results that includes the closest,
         # the safest, and the remaning top-ranked ones, sorted in order
