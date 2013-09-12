@@ -142,15 +142,15 @@
         unhighlightText($(this));
       });
 
-      //google.maps.event.addListener(worstMarker, "mouseover", function() {
-      //    highlightMarker(worstMarker);
-      //    highlightText($("#worst_spot"));
-      //});
+      google.maps.event.addListener(worstMarker, "mouseover", function() {
+          highlightMarker(worstMarker);
+          highlightText($("#worst_spot"));
+      });
 
-      //google.maps.event.addListener(worstMarker, "mouseout", function() {
-      //    unhighlightMarker(worstMarker);
-      //    unhighlightText($("#worst_spot"));
-      //});
+      google.maps.event.addListener(worstMarker, "mouseout", function() {
+          unhighlightMarker(worstMarker);
+          unhighlightText($("#worst_spot"));
+      });
 
     }
 
