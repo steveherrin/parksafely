@@ -2,7 +2,7 @@ import csv
 import xml.etree.ElementTree as ET
 import psycopg2
 import glob
-from db_info import conn_string
+import config
 
 def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, address):
     """ Writes the crime to the database specified in conn, with the
@@ -21,7 +21,7 @@ def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, 
              location, address, at_police_station)
             VALUES (%s, %s, %s, %s, """ + location + ", %s, %s)",
             (incident_num, timestamp, vehicle,
-             severity, address, ))
+             severity, address, at_police_station))
     except psycopg2.IntegrityError:
         # First, roll it back
         conn.rollback()
@@ -71,7 +71,10 @@ def getCrimeInfo(descript):
 
 if __name__ == "__main__":
 
-    conn = psycopg2.connect(conn_string)
+    conn = psycopg2.connect(host = config.DB_HOST,
+                            user = config.DB_USER,
+                            dbname = config.DB_NAME,
+                            password = config.DB_PASSWORD)
     n_csv = 0
     n_kml = 0
 

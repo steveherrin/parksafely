@@ -1,12 +1,12 @@
 from __future__ import division
 import psycopg2
 import numpy as np
-import pylab as P
-from db_info import conn_info
-from scipy.stats import linregress
-from math import log
+import config
 
-conn = psycopg2.connect(**conn_info)
+conn = psycopg2.connect(host = config.DB_HOST,
+                        user = config.DB_USER,
+                        dbname = config.DB_NAME,
+                        password = config.DB_PASSWORD)
 
 outer_cur = conn.cursor()
 inner_cur = conn.cursor()

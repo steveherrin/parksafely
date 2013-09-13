@@ -1,7 +1,7 @@
 from __future__ import division
 import psycopg2
 import numpy as np
-from db_info import conn_info
+import config
 import db_interface
 from operator import itemgetter
 import sys
@@ -35,7 +35,10 @@ def get_location_rate(cur, point):
 
     return n_crimes/n_nearby
 
-db = db_interface.db_interface(**conn_info)
+db = db_interface.db_interface(host = config.DB_HOST,
+                               user = config.DB_USER,
+                               dbname = config.DB_NAME,
+                               password = config.DB_PASSWORD)
 cur = db.cursor
 
 # Pick half of the bike crimes this year to test on

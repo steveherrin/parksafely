@@ -2,13 +2,13 @@ import csv
 import time
 import json
 import psycopg2
-import requesocks as requests
-from db_info import conn_string
+import requests
+import config
 
 log = open('duplicates.txt', 'w')
 use_geocoding = False
 
-use_SOCKS = True
+use_SOCKS = False
 session = requests.session()
 if use_SOCKS:
     session.proxies = {'http': 'socks5://127.0.0.1:9999',
@@ -86,7 +86,10 @@ def writeBikeParkingToDB(conn, entry):
 
 if __name__ == "__main__":
 
-    conn = psycopg2.connect(conn_string)
+    conn = psycopg2.connect(host = config.DB_HOST,
+                            user = config.DB_USER,
+                            dbname = config.DB_NAME,
+                            password = config.DB_PASSWORD)
     n_read = 0
     n_written = 0
 
