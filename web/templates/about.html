@@ -1,10 +1,43 @@
 {% extends "layout.html" %}
 {% set active_page = "about" %}
 {% block body %}
-<div class="">
-  <div class="row">
-    <div class="container">
-      <h1>About the App</h1>
+<div class="row-fluid">
+  <div class="span6 offset3 fortext">
+    <div class="container-fluid">
+      <h3>Data</h3>
+      <div class="container-fluid">
+        <p>The bicycle parking data and the crime data are both provided by the
+        <a href="https://data.sfgov.org">City of San Francisco</a>.</p>
+      </div>
+      <h3>Technology</h3>
+      <div class="container-fluid">
+        <p>Python is used to read and munge the data. It is then stored in a
+        PostgreSQL database with PostGIS installed. This makes working
+        with the geographic data straightforward and fast.</p>
+      </div>
+      <h3>Algorithm</h3>
+      <div class="container-fluid">
+        <p>For each bike rack, the number of nearby bike thefts are calculated.
+        Since crime may move as the city changes, this number is weighted so
+        that more recent thefts are weighted more heavily.</p>
+        <p>This number, however, really reflects where bikes are parked. More
+        thefts will take place where more bikes are parked. To account for
+        this, it is normalized by the number of bike racks nearby. The number
+        of bicycle racks should be related to the number of people parking,
+        so this gives a true theft rate.</p>
+        <p>To recommend a parking spot, the app computes the distance to and
+        the normalized theft rate at all nearby racks. Both of these numbers
+        are scaled and combined to produce a single number that is used to
+        rank the parking spots.</p>
+        <p>By changing the scaling, the algorithm can favor closer parking
+        or safer parking. The default option tries to strike a good balance.</p>
+      </div>
+      <h3>App</h3>
+      <div class="container-fluid">
+        <p>The app is served up using the Flask framework for Python. It
+        makes extensive use of the Google Maps API. Hosting is provided by
+        Amazon Web Services. The styling is done with Twitter Bootstrap.</p>
+      </div>
     </div>
   </div>
 </div>

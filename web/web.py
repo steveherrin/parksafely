@@ -17,16 +17,11 @@ import re
 import my_db_config
 
 # TODO: use Flask's config file support for this
-DB_HOST = my_db_config.host
-DB_NAME = my_db_config.name
-DB_USER = my_db_config.user
-DB_PASSWORD = my_db_config.password
-
-MAPS_API_KEY = "AIzaSyAw2BGPy0yPzGmghf_a8P--TitjeFSXN68"
-MAX_RESULTS = 5
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+app.config.from_pyfile('db_config.cfg', silent=True)
+
 
 app.debug = True
 

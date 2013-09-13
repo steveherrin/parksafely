@@ -4,14 +4,14 @@
 <div class="">
   <div class="row-fluid">
     <div class="span8 offset2" style="line-height:70px;">
-      <br /><img src="{{ url_for('static', filename='img/logo.png') }}">
+      <img src="{{ url_for('static', filename='img/logo.png') }}">
       <br /><p class="lead"><i>Bicycling in San Francisco? Find a safe place to park.</i></p>
     </div>
   </div>
   <div class="row-fluid" style="line:height:70px"><br /></div>
   <div class="row-fluid">
     <form class="form-search" action="{{ url_for('map') }}" method=get>
-      <div class="span4 offset2 search input-append">
+      <div class="span3 offset2 search input-append">
         <input type="text" class="input span12" name="address" placeholder="Enter an address…">
         <span class="add-on">San Francisco, CA</span>
       </div>
@@ -21,4 +21,10 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style type="text/css">
+.row-fluid:first-of-type { padding-top: 100px; }
+</style>
 {% endblock %}
