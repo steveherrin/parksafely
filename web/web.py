@@ -191,4 +191,5 @@ def stats():
                                              (100*(1-stats['risk_ratio'])))
 
 if __name__ == "__main__":
-    app.run('0.0.0.0', port=8080)
+    app.run(host = app.config['HOST'],
+            port = app.config['PORT'])
