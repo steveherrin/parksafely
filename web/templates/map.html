@@ -95,7 +95,7 @@
         if ($.url().param('preference') != undefined) {
           SearchParams['preference'] = $.url().param('preference');
         } else {
-          SearchParams['preference'] = 0;
+          SearchParams['preference'] = 4;
         }
         $('#preference').slider({
             min: -10,
@@ -298,8 +298,8 @@
           });
 
           var title = name;
-          document.getElementById('icon'+i).innerHTML = '<i class="icon-shield icon-4x pull-left'+
-                     'icon-border saferank'+Math.floor(score/10)+'">';
+          document.getElementById('icon'+i).innerHTML = '<i class="icon-circle icon-2x pull-left'+
+                     'icon-border saferank'+Math.floor(score/10)+'"></i><br /><small>Safe: ' + Math.round(score/10) + '/10</small>';
           var text = '<p><b>' + name + '</b><br />';
           if (address) {
             text += address + "<br />";
