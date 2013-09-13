@@ -113,7 +113,7 @@
           SearchParams = event.state;
           $("#max_d").val(SearchParams['max_d']);
           $("#preference").slider("value", SearchParams['preference']);
-          $("#address").val(SearchParams['address']);
+          $("#address").val(SearchParams['address_string']);
           newSearch();
         }
       }
@@ -162,7 +162,8 @@
           SearchParams['lat'] = loc.lat;
           SearchParams['lon'] = loc.lng;
           var form_add = geo_data.results[0].formatted_address;
-          $('#address').val(form_add.split(',')[0])
+          SearchParams['address_string'] = form_add.split(',')[0]
+          $('#address').val(SearchParams['address_string'])
           newSearch();
         }
       }
