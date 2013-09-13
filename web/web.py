@@ -15,13 +15,9 @@ import pprint
 import db_interface
 import re
 
-# TODO: use Flask's config file support for this
-
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_pyfile('config.cfg', silent=True)
-
-app.debug = True
 
 def connect_db():
     """ Returns an interface to the database
@@ -195,4 +191,4 @@ def stats():
                                              (100*(1-stats['risk_ratio'])))
 
 if __name__ == "__main__":
-    app.run()
+    app.run('0.0.0.0', port=8080)
