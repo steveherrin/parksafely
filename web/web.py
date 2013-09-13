@@ -14,14 +14,12 @@ from operator import itemgetter
 import pprint
 import db_interface
 import re
-import my_db_config
 
 # TODO: use Flask's config file support for this
 
 app = Flask(__name__)
 app.config.from_object(__name__)
-app.config.from_pyfile('db_config.cfg', silent=True)
-
+app.config.from_pyfile('config.cfg', silent=True)
 
 app.debug = True
 
