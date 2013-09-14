@@ -52,7 +52,7 @@
         {% for result_num in range(config['MAX_RESULTS']) %}
 		    <div class="row-fluid" data-n="{{result_num}}" id="text{{result_num}}">
           <div class="span2">
-            <div class="container-fluid" id="icon{{result_num}}"></div>
+            <div class="container" id="icon{{result_num}}"></div>
           </div>
           <div class="span9">
 		        <div class="container-fluid" id="subtext{{result_num}}"></div>
@@ -95,7 +95,7 @@
         if ($.url().param('preference') != undefined) {
           SearchParams['preference'] = $.url().param('preference');
         } else {
-          SearchParams['preference'] = 4;
+          SearchParams['preference'] = 0;
         }
         $('#preference').slider({
             min: -10,
@@ -298,7 +298,7 @@
           });
 
           var title = name;
-          document.getElementById('icon'+i).innerHTML = '<i class="icon-circle icon-2x pull-left'+
+          document.getElementById('icon'+i).innerHTML = ' &nbsp;&nbsp;<i class="icon-circle icon-3x pull-left'+
                      'icon-border saferank'+Math.floor(score/10)+'"></i><br /><small>Safe: ' + Math.round(score/10) + '/10</small>';
           var text = '<p><b>' + name + '</b><br />';
           if (address) {

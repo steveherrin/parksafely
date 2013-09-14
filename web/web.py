@@ -96,10 +96,8 @@ def pref_to_scale(x):
         is closer and +10 is safer to a scaling factor for the
         crime rate """
     # Somewhat arbitrarily chosen.
-    # Want 0 to be in the middle with about 1/3 reduction in risk
-    # 0 corresponds to about a 2/3 reduction in risk
-    # 10 corresponds to about a 1/6 reduction in risk
-    return 0.5*pow(25, float(-x)/18)
+    # By eye, 0.25 produces a good balance
+    return 0.25*pow(25, float(-x)/14)
 
 @app.route("/stats_data")
 def stats_data():
