@@ -48,6 +48,11 @@ def about():
 def contact():
     return render_template('contact.html')
 
+@app.route("/slides")
+def slides():
+    return render_template("slides.html",
+                           embed_code = app.config['SLIDE_EMBED_CODE'])
+
 def prettify_str(name):
     """ Makes street addresses look good """
     # Strip leading 0s from street addresses (e.g. 04th St)
