@@ -55,6 +55,7 @@
     <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script src="{{ url_for('static', filename='js/purl/purl.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    {% if config['USE_ANALYICS'] %}
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -65,6 +66,7 @@
     ga('send', 'pageview');
 
   </script>
+  {% endif %}
     {% block scripts %}{% endblock %}
 
   </body>
