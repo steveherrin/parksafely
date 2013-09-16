@@ -20,17 +20,17 @@ Some scripts in parse_data and analytics depend on the db_interface.py script an
 
 The Flask script (web.py) also requires a configuration file. An example would be:
 
-# Database settings
+ # Database settings
 
 DB_HOST = 'localhost'
 
-DB_NAME = '<db name>'
+DB_NAME = 'db_name'
 
-DB_USER = '<username>'
+DB_USER = 'username'
 
-DB_PASSWORD = '<password>'
+DB_PASSWORD = 'password'
 
-# Flask settings
+ # Flask settings
 
 DEBUG = True
 
@@ -38,11 +38,11 @@ HOST = '0.0.0.0'
 
 PORT = 5000
 
-# Things that go into the served pages
+ # Things that go into the served pages
 
-MAPS_API_KEY = "<Google Maps API Key"
+MAPS_API_KEY = "Google Maps API Key"
 
-SLIDE_EMBED_CODE = "<Slideshare embed code>"
+SLIDE_EMBED_CODE = "Slideshare embed code"
 
 USE_ANALYTICS = True
 
