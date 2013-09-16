@@ -179,7 +179,7 @@ def stats():
     n_crime = get_db().get_n_of_crime('bicycle')
     n_parking = get_db().get_n_of_parking('bicycle')
     # Get stats for default preference
-    stats = get_db().get_recommendation_stats(pref_to_scale(0))
+    stats = get_db().get_recommendation_stats(0.5)
     return render_template("stats.html",
                             n_crime = n_crime,
                             n_parking = n_parking,
