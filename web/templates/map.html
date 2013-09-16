@@ -28,7 +28,7 @@
                       <div class="container-fluid">closer</div>
                     </div>
                     <div class="span2 offset2">
-                      <div class="container-fluid">safer</div>
+                      <div class="container-fluid no-right-pad">safer</div>
                     </div>
                   </div>
                 <label class="control-label" for="max_d">Max Distance</label>
@@ -51,8 +51,8 @@
 		    <legend>Recommended Parking</legend>
         {% for result_num in range(config['MAX_RESULTS']) %}
 		    <div class="row-fluid" data-n="{{result_num}}" id="text{{result_num}}">
-          <div class="span2">
-            <div class="container" id="icon{{result_num}}"></div>
+          <div class="span3">
+            <div class="container-fluid no-right-pad" style="text-align: center" id="icon{{result_num}}"></div>
           </div>
           <div class="span9">
 		        <div class="container-fluid" id="subtext{{result_num}}"></div>
@@ -298,8 +298,8 @@
           });
 
           var title = name;
-          document.getElementById('icon'+i).innerHTML = ' &nbsp;&nbsp;<i class="icon-circle icon-3x pull-left'+
-                     'icon-border saferank'+Math.floor(score/10)+'"></i><br /><small>Safe: ' + Math.round(score/10) + '/10</small>';
+          document.getElementById('icon'+i).innerHTML = '<i class="icon-circle icon-3x pull-left'+
+                     'icon-border saferank'+Math.floor(score/10)+'"></i><br /><small>Safe:&nbsp;' + Math.round(score/10) + '/10</small>';
           var text = '<p><b>' + name + '</b><br />';
           if (address) {
             text += address + "<br />";
