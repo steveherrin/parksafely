@@ -4,6 +4,8 @@ body { padding-top: 40px; /* 40px to make the container go all the way to the bo
 #map-canvas img { width:auto; display:inline; max-width:none; line-height:normal; }
 .form-small .control-label { width: 100px; }
 .form-small .controls { margin-left: 120px; }
+.splash-logo { text-align: center; margin-top: 100px}
+.splash-form { text-align: center; }
 .saferank0 { color: #FF0000; }
 .saferank1 { color: #FF5500; }
 .saferank2 { color: #FFAA00; }
@@ -17,6 +19,8 @@ body { padding-top: 40px; /* 40px to make the container go all the way to the bo
 .fortext { background-color: rgba(255,255,255,0.5); }
 .down100 { margin-top: 100px; }
 .right30 { margin-left: 30px; }
+.btn-left-30 { margin-left: 30px; }
+
 .no-right-pad { padding-right: 0px; }
 .slider-legend-55 { width: 55px; display: inline-block; }
 

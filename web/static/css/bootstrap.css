@@ -1704,7 +1704,7 @@ select:focus:invalid:focus {
 
 .input-append .add-on,
 .input-prepend .add-on,
-.input-append .btn,
+/*.input-append .btn,*/
 .input-prepend .btn,
 .input-append .btn-group > .dropdown-toggle,
 .input-prepend .btn-group > .dropdown-toggle {
@@ -1749,13 +1749,13 @@ select:focus:invalid:focus {
 }
 
 .input-append .add-on,
-.input-append .btn,
+/*.input-append .btn,*/
 .input-append .btn-group {
   margin-left: -1px;
 }
 
 .input-append .add-on:last-child,
-.input-append .btn:last-child,
+/*.input-append .btn:last-child,*/
 .input-append .btn-group:last-child > .dropdown-toggle {
   -webkit-border-radius: 0 4px 4px 0;
      -moz-border-radius: 0 4px 4px 0;
@@ -1826,11 +1826,11 @@ input.search-query {
           border-radius: 14px 0 0 14px;
 }
 
-.form-search .input-append .btn {
+/*.form-search .input-append .btn {
   -webkit-border-radius: 0 14px 14px 0;
      -moz-border-radius: 0 14px 14px 0;
           border-radius: 0 14px 14px 0;
-}
+}*/
 
 .form-search .input-prepend .search-query {
   -webkit-border-radius: 0 14px 14px 0;
