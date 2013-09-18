@@ -209,18 +209,18 @@
       function getScoreColor(number) {
         var red;
         var green;
-        number = Math.floor(number/10);
+        number = Math.round(number/10);
         if (number < 0) {
           number = 0;
-        } else if (number >= 10) {
-          number = 9;
+        } else if (number > 10) {
+          number = 10;
         }
         if (number <= 4) {
-          green = 63*number;
+          green = 51*number;
           red = 255;
         } else {
           green = 255;
-          red = 255 - 51*(number - 4);
+          red = 255 - 51*(number - 5);
         }
         var rs = red.toString(16);
         var gs = green.toString(16);
@@ -297,7 +297,7 @@
 
           var title = name;
           document.getElementById('icon'+i).innerHTML = '<i class="icon-circle icon-3x pull-left'+
-                     'icon-border saferank'+Math.floor(score/10)+'"></i><br /><small>Safe:&nbsp;' + Math.round(score/10) + '/10</small>';
+                     'icon-border saferank'+Math.round(score/10)+'"></i><br /><small>Safe:&nbsp;' + Math.round(score/10) + '/10</small>';
           var text = '<p><b>' + name + '</b><br />';
           if (address) {
             text += address + "<br />";

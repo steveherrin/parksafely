@@ -7,15 +7,16 @@ body { padding-top: 40px; /* 40px to make the container go all the way to the bo
 .splash-logo { text-align: center; margin-top: 100px}
 .splash-form { text-align: center; }
 .saferank0 { color: #FF0000; }
-.saferank1 { color: #FF5500; }
-.saferank2 { color: #FFAA00; }
-.saferank3 { color: #FFCC00; }
-.saferank4 { color: #FFFF00; }
-.saferank5 { color: #CCFF00; }
-.saferank6 { color: #99FF00; }
-.saferank7 { color: #66FF00; }
-.saferank8 { color: #33FF00; }
-.saferank9 { color: #00FF00; }
+.saferank1 { color: #FF3300; }
+.saferank2 { color: #FF6600; }
+.saferank3 { color: #FF9900; }
+.saferank4 { color: #FFCC00; }
+.saferank5 { color: #FFFF00; }
+.saferank6 { color: #CCFF00; }
+.saferank7 { color: #99FF00; }
+.saferank8 { color: #66FF00; }
+.saferank9 { color: #33FF00; }
+.saferank10 { color: #00FF00; }
 .fortext { background-color: rgba(255,255,255,0.5); }
 .down100 { margin-top: 100px; }
 .right30 { margin-left: 30px; }
