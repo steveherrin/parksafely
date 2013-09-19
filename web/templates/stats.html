@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% set active_page = "stats" %}
 {% set active_page_title = "Facts" %}
 {% block body %}
   <div class="row-fluid">
@@ -12,7 +13,7 @@
       <br /><br />
       Between 2003 and 2013, there were <b>{{ n_crime }}</b> reported bicycle thefts or attempted thefts in San Francisco.
       <br /><br />
-      The map to the left shows the areas of the city with the highest density of bicycle theft.
+      The map to the left shows the areas of the city with the worst theft rates in red.
       <br />
     </div>
     <h3>Worst Location</h3>

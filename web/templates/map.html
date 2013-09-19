@@ -49,11 +49,9 @@
 		    <legend>Recommended Parking</legend>
         {% for result_num in range(config['MAX_RESULTS']) %}
 		    <div class="row-fluid" data-n="{{result_num}}" id="text{{result_num}}">
-          <div class="span3">
-            <div class="container-fluid no-right-pad" style="text-align: center" id="icon{{result_num}}"></div>
-          </div>
-          <div class="span9">
-		        <div class="container-fluid" id="subtext{{result_num}}"></div>
+          <div class="container-fluid">
+            <div class="result-icon" style="text-align: center" id="icon{{result_num}}"></div>
+		        <div class="result-text" id="subtext{{result_num}}"></div>
           </div>
 		    </div>
 		    {% endfor %}
@@ -77,9 +75,7 @@
 				  zoom: 12,
 				  mapTypeId: google.maps.MapTypeId.ROADMAP
         };
-        var h = $(window).height();
-        var offset = 40;
-        $('#map-canvas').css('height', (h - offset));
+        sizeWindow();
         map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
         if ($.url().param('address') != undefined) {
           update_address($.url().param('address'));
@@ -150,12 +146,8 @@
 
       function update_coords(geo_data) {
         if (geo_data.status != "OK") {
-          console.log("Geocoding failed with " + geo_data.status);
           lookupFailed();
         } else {
-          if (geo_data.results.length > 1) {
-            console.log("Multiple matches for address.");
-          }
           var loc = geo_data.results[0].geometry.location;
           SearchParams['lat'] = loc.lat;
           SearchParams['lon'] = loc.lng;
@@ -392,12 +384,22 @@
                          });
     }
 
+
+		function sizeWindow() {
+      var h = $(window).height();
+      var w = $(window).width();
+      if ( w < 768) {
+          $('#map-canvas').css('height', Math.floor(0.5*h));
+      } else {
+        var offset = 40;
+        $('#map-canvas').css('height', (h - offset));
+      }
+    }
+
 		google.maps.event.addDomListener(window, 'load', initialize);
 
-		$(window).resize(function () {
-      var h = $(window).height();
-      var offset = 40;
-      $('#map-canvas').css('height', (h - offset));
+		$(window).resize(function() {
+        sizeWindow();
     }).resize();
 		</script>
 

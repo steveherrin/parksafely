@@ -12,20 +12,20 @@
       </div>
       <h3>Technology</h3>
       <div class="container-fluid">
-        <p>Python is used to read and munge the data. It is then stored in a
-        PostgreSQL database with PostGIS installed. This makes working
-        with the geographic data straightforward and fast.</p>
+        <p><a href="http://www.python.org/">Python</a> is used to read and munge the data.
+        It is then stored in a <a href="http://www.postgresql.org/">PostgreSQL</a>
+        database. Geospatial support from  <a href="http://postgis.net/">PostGIS</a> makes
+        working with the geographic data straightforward and fast.</p>
       </div>
       <h3>Algorithm</h3>
       <div class="container-fluid">
         <p>For each bike rack, the number of nearby bike thefts are calculated.
         Since crime may move as the city changes, this number is weighted so
         that more recent thefts are weighted more heavily.</p>
-        <p>This number, however, really reflects where bikes are parked. More
-        thefts will take place where more bikes are parked. To account for
-        this, it is normalized by the number of bike racks nearby. The number
-        of bicycle racks should be related to the number of people parking,
-        so this gives a true theft rate.</p>
+        <p>More bikes will be stolen where more bikes are parked. But there will
+        also be more bike racks where more bikes are parked. So the algorithm
+        divides the number of nearby bicycle thefts by the number of nearby
+        bicycle racks to account for this effect.</p>
         <p>To recommend a parking spot, the app computes the distance to and
         the normalized theft rate at all nearby racks. Both of these numbers
         are scaled and combined to produce a single number that is used to
@@ -35,9 +35,12 @@
       </div>
       <h3>App</h3>
       <div class="container-fluid">
-        <p>The app is served up using the Flask framework for Python. It
-        makes extensive use of the Google Maps API. Hosting is provided by
-        Amazon Web Services. The styling is done with Twitter Bootstrap.</p>
+        <p>The app is served up using the <a href="http://flask.pocoo.org/">
+        Flask framework</a> for Python. It makes extensive use of the
+        <a href="https://developers.google.com/maps/">Google Maps API</a>.
+        Hosting is provided by <a href="http://aws.amazon.com/">Amazon Web
+        Services</a>. The styling is done with <a href="http://getbootstrap.com/">
+        Twitter Bootstrap</a>.</p>
       </div>
     </div>
   </div>
