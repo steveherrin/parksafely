@@ -6,13 +6,14 @@ import db_interface
 from operator import itemgetter
 import sys
 
+
 def get_location_rate(cur, point):
     location = ("ST_Transform(ST_GeomFromText('POINT(%f %f)', 4326), 26943)"
-                    %(point['lon'], point['lat']))
-    max_r = 200 #meters
+                % (point['lon'], point['lat']))
+    max_r = 200  # meters
     cur.execute("""SELECT SUM(n_spots)
                    FROM parking
-                   WHERE ST_DWithin("""+location+""", location, %s)
+                   WHERE ST_DWithin(""" + location + """, location, %s)
                    AND (year_installed IS NULL OR
                         year_installed != 2013)""", (max_r,))
     try:
@@ -26,8 +27,8 @@ def get_location_rate(cur, point):
                    FROM crimes
                    WHERE crimes.vehicle='bicycle'
                    AND EXTRACT(YEAR FROM t) < 2013
-                   AND ST_DWithin("""+location+""", location, %s)""",
-                   (max_r, ))
+                   AND ST_DWithin(""" + location + """, location, %s)""",
+                (max_r, ))
     try:
         n_crimes = int(cur.fetchone()[0])
     except TypeError:
@@ -35,10 +36,10 @@ def get_location_rate(cur, point):
 
     return n_crimes/n_nearby
 
-db = db_interface.db_interface(host = config.DB_HOST,
-                               user = config.DB_USER,
-                               dbname = config.DB_NAME,
-                               password = config.DB_PASSWORD)
+db = db_interface.db_interface(host=config.DB_HOST,
+                               user=config.DB_USER,
+                               dbname=config.DB_NAME,
+                               password=config.DB_PASSWORD)
 cur = db.cursor
 
 # Pick half of the bike crimes this year to test on
@@ -58,13 +59,13 @@ r_w = float(sys.argv[1])
 # Consider odd and even number days.
 # Odd is used for testing and reported here.
 # Even is the estimate of performance and goes into DB.
-extra_ds = [[],[]]
-risk_factors = [[],[]]
+extra_ds = [[], []]
+risk_factors = [[], []]
 n_zeros = [0, 0]
 
 for crime in cur:
-    point = { 'lon' : float(crime[1]),
-              'lat' : float(crime[2])}
+    point = {'lon': float(crime[1]),
+             'lat': float(crime[2])}
     incident_num = crime[0]
     i = crime[3]
 
@@ -83,24 +84,23 @@ for crime in cur:
     #print best['rate'], best['distance'], rate_there
 
     if closest['rate'] == 0:
-        n_zeros[i] +=1
+        n_zeros[i] += 1
         continue
     else:
         risk_factors[i].append(best['rate']/closest['rate'])
 
 for i in xrange(2):
-    extra_ds[i].sort(reverse = True)
-    risk_factors[i].sort(reverse = True)
+    extra_ds[i].sort(reverse=True)
+    risk_factors[i].sort(reverse=True)
 
 print "Using top pick:"
-print "  walk %0.3f more on average"%(np.mean(extra_ds[1]))
-print "  risk is muliplied by %0.3e on average"%(np.mean(risk_factors[1]))
-print "  There were %i zeros."%(n_zeros[1])
+print "  walk %0.3f more on average" % (np.mean(extra_ds[1]))
+print "  risk is muliplied by %0.3e on average" % (np.mean(risk_factors[1]))
+print "  There were %i zeros." % (n_zeros[1])
 
 db.cursor.execute(""" INSERT INTO recommendation_stats (rate_scale,
                                                      avg_extra_distance,
                                                      risk_ratio)
                       VALUES (%s, %s, %s) """,
-                      (r_w, np.mean(extra_ds[0]), np.mean(risk_factors[0])))
+                  (r_w, np.mean(extra_ds[0]), np.mean(risk_factors[0])))
 db.connection.commit()
-

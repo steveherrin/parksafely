@@ -4,15 +4,16 @@ import numpy as np
 import config
 import sys
 
-conn = psycopg2.connect(host = config.DB_HOST,
-                        user = config.DB_USER,
-                        dbname = config.DB_NAME,
-                        password = config.DB_PASSWORD)
+
+conn = psycopg2.connect(host=config.DB_HOST,
+                        user=config.DB_USER,
+                        dbname=config.DB_NAME,
+                        password=config.DB_PASSWORD)
 
 outer_cur = conn.cursor()
 inner_cur = conn.cursor()
 
-max_d = 200 # meters
+max_d = 200  # meters
 # Last year to include
 last_year = int(sys.argv[1])
 
@@ -31,11 +32,12 @@ for parking_spot in outer_cur:
                             FROM parking AS park1,
                             (SELECT location, vehicle FROM parking
                              WHERE id=%s) AS park2
-                            WHERE ST_DWithin(park1.location, park2.location, %s)
+                            WHERE ST_DWithin(park1.location,
+                                             park2.location, %s)
                             AND park1.vehicle = park2.vehicle
                             AND (park1.year_installed IS NULL
                                  OR park1.year_installed <= %s)""",
-                            (id, max_d, last_year))
+                      (id, max_d, last_year))
     # Edge case where a lone rack was installed in 2013
     try:
         n_spots = int(inner_cur.fetchone()[0])
@@ -45,12 +47,16 @@ for parking_spot in outer_cur:
         inner_cur.execute("""SELECT COUNT(*),
                              SUM(POW(0.3, %s - EXTRACT(YEAR FROM t)))
                                 FROM crimes,
-                                (SELECT location, vehicle FROM parking WHERE id=%s) AS park
+                                (SELECT location,
+                                        vehicle
+                                 FROM parking
+                                 WHERE id=%s) AS park
                                 WHERE crimes.vehicle=park.vehicle
                                 AND NOT at_police_station
                                 AND EXTRACT(YEAR FROM t) <= %s
-                                AND ST_DWithin(park.location, crimes.location, %s)""",
-                            (last_year, id, last_year, max_d))
+                                AND ST_DWithin(park.location,
+                                               crimes.location, %s)""",
+                          (last_year, id, last_year, max_d))
         result = inner_cur.fetchone()
         n_crimes = int(result[0])
         try:

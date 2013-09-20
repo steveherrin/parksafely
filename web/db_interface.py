@@ -3,6 +3,7 @@ import psycopg2
 from psycopg2.extras import DictCursor
 import math
 
+
 class db_interface:
     def __init__(self, **kwargs):
         self.host = kwargs.get('host')
@@ -13,15 +14,15 @@ class db_interface:
 
     def __del__(self):
         if self._connection:
-          self._connection.close()
+            self._connection.close()
 
     def _connect_db(self):
         """ Returns a connection to the database using
             the settings specified in the constructor """
-        return psycopg2.connect(host = self.host,
-                                dbname = self.dbname,
-                                user = self.user,
-                                password = self.password)
+        return psycopg2.connect(host=self.host,
+                                dbname=self.dbname,
+                                user=self.user,
+                                password=self.password)
 
     @property
     def connection(self):
@@ -84,7 +85,7 @@ class db_interface:
                        AND rate IS NOT NULL
                        ORDER BY rate DESC
                        LIMIT 1 OFFSET %s""",
-                       (vehicle, math.floor(percentile*n/100)))
+                    (vehicle, math.floor(percentile*n/100)))
         return float(cur.fetchone()['rate'])
 
     def get_recommendation_stats(self, rate_scale):
@@ -93,7 +94,7 @@ class db_interface:
                                risk_ratio
                         FROM recommendation_stats
                         WHERE rate_scale = %s """,
-                        (rate_scale,))
+                    (rate_scale,))
         return dict(cur.fetchone())
 
     def get_all_parking(self, vehicle):
@@ -127,7 +128,7 @@ class db_interface:
         # used in the database
         location = ("""ST_Transform(ST_GeomFromText(
                        'POINT(%f %f)', 4326), 26943) """
-                       %(point['lon'], point['lat']))
+                    % (point['lon'], point['lat']))
 
         query = ("""SELECT parking.id AS id,
                            ST_Distance(%s, location) AS distance,
@@ -143,7 +144,7 @@ class db_interface:
                     WHERE ST_DWithin(%s, location, %%s)
                     AND (year_installed IS NULL OR year_installed < 2013)
                     AND vehicle=%%s
-                    ORDER BY distance"""%(location, location))
+                    ORDER BY distance""" % (location, location))
         cur = self.dict_cursor
         cur.execute(query, (max_d, vehicle))
 

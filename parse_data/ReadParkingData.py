@@ -15,7 +15,6 @@ if use_SOCKS:
                        'https': 'socks5://127.0.0.1:9999'}
 
 
-
 def writeBikeParkingToDB(conn, entry):
     """ Writes the rack to the database specified in conn, with the
         rest of the arguments giving the rack information. Returns the
@@ -23,23 +22,24 @@ def writeBikeParkingToDB(conn, entry):
         already in the database, for example). """
 
     cursor = conn.cursor()
-    geom = "ST_GeometryFromText('POINT(%f %f)', 4326)"%(entry['lon'],
-                                                        entry['lat'])
-    location = "ST_Transform(%s, 26943)"%(geom)
+    geom = "ST_GeometryFromText('POINT(%f %f)', 4326)" % (entry['lon'],
+                                                          entry['lat'])
+    location = "ST_Transform(%s, 26943)" % (geom)
 
     try:
-      cursor.execute("""INSERT INTO parking (vehicle,
-                                             description,
-                                             location_name,
-                                             address,
-                                             n_spots,
-                                             year_installed,
-                                             location,
-                                             lat,
-                                             lon)
-                        VALUES (%s, %s, %s, %s, %s, %s,"""
-                                + location + ", %s, %s)",
-                       ('bicycle', entry['description'], entry['location_name'],
+        cursor.execute("""INSERT INTO parking (vehicle,
+                                               description,
+                                               location_name,
+                                               address,
+                                               n_spots,
+                                               year_installed,
+                                               location,
+                                               lat,
+                                               lon)
+                          VALUES (%s, %s, %s, %s, %s, %s,"""
+                       + location + ", %s, %s)",
+                       ('bicycle', entry['description'],
+                        entry['location_name'],
                         entry['address'], entry['n_spots'],
                         entry['year_installed'], entry['lat'], entry['lon']))
     except psycopg2.IntegrityError as e:
@@ -47,10 +47,11 @@ def writeBikeParkingToDB(conn, entry):
         conn.rollback()
 
         # Let's see what we're dealing with
-        cursor.execute("""SELECT id, description, location_name, address, n_spots, year_installed
+        cursor.execute("""SELECT id, description, location_name,
+                                 address, n_spots, year_installed
                           FROM parking
-                          WHERE lat=%s AND lon=%s AND vehicle = 'bicycle'""", (entry['lat'],
-                                                                               entry['lon']));
+                          WHERE lat=%s AND lon=%s AND vehicle = 'bicycle'""",
+                       (entry['lat'], entry['lon']))
         stored = cursor.fetchone()
         id = int(stored[0])
         log_it = stored[3].lower() != entry['address'].lower()
@@ -59,22 +60,26 @@ def writeBikeParkingToDB(conn, entry):
             cursor.execute('UPDATE parking SET location_name=%s WHERE id=%s',
                            (entry['location_name'], id))
             log_it = False
-        if stored[1] != entry['description'] or stored[5] != entry['year_installed']:
+        if ((stored[1] != entry['description'] or
+             stored[5] != entry['year_installed'])):
+
             # If they're described differently (street rack vs. lockers, e.g.)
             # Or if they weren't installed the same year,
             # assume they're different and update the number of spots
             if stored[1] != entry['description']:
-                cursor.execute("UPDATE parking SET description = 'MIXED' WHERE id=%s", (id, ))
+                cursor.execute("""UPDATE parking SET description = 'MIXED'
+                                  WHERE id=%s""", (id, ))
             cursor.execute('UPDATE parking SET n_spots=%s WHERE id=%s',
                            (int(entry['n_spots']) + int(stored[4]), id))
             log_it = False
         elif stored[4] > int(entry['n_spots']):
-            # Assume that someone was just wrong about how many spots there were
+            # Assume that someone was just wrong about
+            # how many spots there were
             cursor.execute('UPDATE parking SET n_spots=%s WHERE id=%s',
-                            (int(entry['n_spots']), id))
+                           (int(entry['n_spots']), id))
         if log_it:
             log.write('-'*10)
-            log.write('%s %s %s %s %s %s'%(stored))
+            log.write('%s %s %s %s %s %s' % (stored))
             log.write(str(entry))
             log.write('\n\n')
 
@@ -86,10 +91,10 @@ def writeBikeParkingToDB(conn, entry):
 
 if __name__ == "__main__":
 
-    conn = psycopg2.connect(host = config.DB_HOST,
-                            user = config.DB_USER,
-                            dbname = config.DB_NAME,
-                            password = config.DB_PASSWORD)
+    conn = psycopg2.connect(host=config.DB_HOST,
+                            user=config.DB_USER,
+                            dbname=config.DB_NAME,
+                            password=config.DB_PASSWORD)
     n_read = 0
     n_written = 0
 
@@ -100,7 +105,7 @@ if __name__ == "__main__":
                 continue
             n_read += 1
             if n_read % 100 == 0:
-              print n_read
+                print n_read
             entry = {}
             entry['description'] = row['PLACEMENT']
             entry['lat'] = float(row['LATITUDE'])
@@ -115,20 +120,24 @@ if __name__ == "__main__":
                 entry['year_installed'] = None
             if use_geocoding:
                 if 'none' in entry['address'].lower():
-                    address_for_geo = entry['location_name'] + ', San Francisco, CA'
+                    address_for_geo = (entry['location_name'] +
+                                       ', San Francisco, CA')
                 else:
-                    address_for_geo = entry['address'] + ', San Francisco, CA'
+                    address_for_geo = (entry['address'] +
+                                       ', San Francisco, CA')
                 # Be careful; Google limits # of requests per day
                 cur = conn.cursor()
-                cur.execute("SELECT lat, lon FROM parking WHERE address LIKE %s", (address_for_geo,))
+                cur.execute("""SELECT lat, lon FROM parking
+                               WHERE address LIKE %s""", (address_for_geo,))
                 if cur.rowcount > 0:
                     row = cur.fetchone()
                     entry['lat'] = row[0]
                     entry['lon'] = row[1]
                 else:
-                    params = {'sensor' : 'false'}
+                    params = {'sensor': 'false'}
                     params['address'] = address_for_geo + ', San Francisco, CA'
-                    r = session.get("http://maps.google.com/maps/api/geocode/json", params = params)
+                    r = session.get("http://maps.google.com/" +
+                                    "maps/api/geocode/json", params=params)
                     geo_data = json.loads(r.text)
                     #print geo_data
                     location = geo_data['results'][0]['geometry']['location']
@@ -143,8 +152,8 @@ if __name__ == "__main__":
 
             n_written += writeBikeParkingToDB(conn, entry)
 
-    print("Read %i entries."%(n_read))
-    print("Wrote %i entries to DB."%(n_written))
+    print("Read %i entries." % (n_read))
+    print("Wrote %i entries to DB." % (n_written))
 
     # So we can VACUUM
     conn.autocommit = True
@@ -155,7 +164,7 @@ if __name__ == "__main__":
     # Print the database stsatus.
     cursor.execute("SELECT COUNT(*) FROM parking")
     record = cursor.fetchone()
-    print("Database now has %i entries."%(record[0]))
+    print("Database now has %i entries." % (record[0]))
 
     cursor.close()
     conn.close()

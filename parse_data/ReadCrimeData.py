@@ -4,7 +4,9 @@ import psycopg2
 import glob
 import config
 
-def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, address):
+
+def writeCrimeToDB(conn, incident_num, vehicle, severity,
+                   date, time, lat, lon, address):
     """ Writes the crime to the database specified in conn, with the
         rest of the arguments giving the crime information. Returns the
         number of crimes actually inserted (will be 0 if the crime's
@@ -12,16 +14,16 @@ def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, 
 
     cursor = conn.cursor()
     timestamp = date + " " + time + " America/Los_Angeles"
-    geom = "ST_GeometryFromText('POINT(%f %f)', 4326)"%(lon, lat)
-    location = "ST_Transform(%s, 26943)"%(geom)
+    geom = "ST_GeometryFromText('POINT(%f %f)', 4326)" % (lon, lat)
+    location = "ST_Transform(%s, 26943)" % (geom)
     at_police_station = (address == '800 Block of BRYANT ST')
     try:
         cursor.execute("""INSERT INTO crimes
-            (incident_num, t, vehicle, severity,
-             location, address, at_police_station)
-            VALUES (%s, %s, %s, %s, """ + location + ", %s, %s)",
-            (incident_num, timestamp, vehicle,
-             severity, address, at_police_station))
+                          (incident_num, t, vehicle, severity,
+                          location, address, at_police_station)
+                          VALUES (%s, %s, %s, %s, """ + location + ", %s, %s)",
+                       (incident_num, timestamp, vehicle,
+                        severity, address, at_police_station))
     except psycopg2.IntegrityError:
         # First, roll it back
         conn.rollback()
@@ -42,8 +44,10 @@ def writeCrimeToDB(conn, incident_num, vehicle, severity, date, time, lat, lon, 
         return 1
     return 0
 
-def getCrimeInfo(descript):
 
+def getCrimeInfo(descript):
+    """ Given a description string for a crime, get the relevant info
+        about it if it's a crime of interest."""
     descript = descript.upper()
 
     # Description of crime, vehicle type, severity
@@ -51,17 +55,17 @@ def getCrimeInfo(descript):
     # Vehicle type is bicycle, automobile, or motorcycle
     # Severity is assigned semi-arbiratily, with outright theft at 2
     crimes = (('THEFT BICYCLE', 'bicycle', 2),
-            ('ATTEMPTED THEFT OF A BICYCLE', 'bicycle', 1),
-            ('THEFT FROM UNLOCKED VEHICLE', 'automobile', 1),
-            ('THEFT FROM LOCKED VEHICLE', 'automobile', 1),
-            ('THEFT FROM UNLOCKED AUTO', 'automobile', 1),
-            ('THEFT FROM LOCKED AUTO', 'automobile', 1),
-            ('THEFT AUTO STRIP', 'automobile', 1),
-            ('STOLEN AUTOMOBILE', 'automobile', 2),
-            ('STOLEN MOTORCYCLE', 'motorcycle', 2),
-            ('STOLEN TRUCK', 'automobile', 2),
-            ('VANDALISM OF VEHICLES', 'automobile', 1),
-            ('ARSON OF A VEHICLE', 'automobile', 2))
+              ('ATTEMPTED THEFT OF A BICYCLE', 'bicycle', 1),
+              ('THEFT FROM UNLOCKED VEHICLE', 'automobile', 1),
+              ('THEFT FROM LOCKED VEHICLE', 'automobile', 1),
+              ('THEFT FROM UNLOCKED AUTO', 'automobile', 1),
+              ('THEFT FROM LOCKED AUTO', 'automobile', 1),
+              ('THEFT AUTO STRIP', 'automobile', 1),
+              ('STOLEN AUTOMOBILE', 'automobile', 2),
+              ('STOLEN MOTORCYCLE', 'motorcycle', 2),
+              ('STOLEN TRUCK', 'automobile', 2),
+              ('VANDALISM OF VEHICLES', 'automobile', 1),
+              ('ARSON OF A VEHICLE', 'automobile', 2))
 
     for crime in crimes:
         if crime[0] in descript:
@@ -71,10 +75,10 @@ def getCrimeInfo(descript):
 
 if __name__ == "__main__":
 
-    conn = psycopg2.connect(host = config.DB_HOST,
-                            user = config.DB_USER,
-                            dbname = config.DB_NAME,
-                            password = config.DB_PASSWORD)
+    conn = psycopg2.connect(host=config.DB_HOST,
+                            user=config.DB_USER,
+                            dbname=config.DB_NAME,
+                            password=config.DB_PASSWORD)
     n_csv = 0
     n_kml = 0
 
@@ -95,8 +99,11 @@ if __name__ == "__main__":
                     lon = float(row["X"])
                     address = row['Location']
 
-                    n_csv += writeCrimeToDB(conn, incident_num, info['vehicle'],
-                                    info['severity'], date, time, lat, lon, address)
+                    n_csv += writeCrimeToDB(conn, incident_num,
+                                            info['vehicle'],
+                                            info['severity'],
+                                            date, time, lat,
+                                            lon, address)
 
     for file_name in glob.iglob("data/CrimeIncident90*.kml"):
         tree = ET.parse(file_name)
@@ -119,14 +126,16 @@ if __name__ == "__main__":
                 coord = point.find(prefix + 'coordinates').text.split(',')
                 lat = float(coord[1])
                 lon = float(coord[0])
-                address = None # TODO: Fix this
+                address = None  # TODO: Fix this
 
-                n_kml += writeCrimeToDB(conn, incident_num, info['vehicle'],
-                            info['severity'], date, time, lat, lon, address)
+                n_kml += writeCrimeToDB(conn, incident_num,
+                                        info['vehicle'],
+                                        info['severity'], date,
+                                        time, lat, lon, address)
 
-    print("Read %i entries."%(n_csv + n_kml))
-    print("  %i from the csv files."%(n_csv))
-    print("  %i from the kml files."%(n_kml))
+    print("Read %i entries." % (n_csv + n_kml))
+    print("  %i from the csv files." % (n_csv))
+    print("  %i from the kml files." % (n_kml))
 
     # So we can VACUUM
     conn.autocommit = True
@@ -137,7 +146,7 @@ if __name__ == "__main__":
     # Summarize the database status.
     cursor.execute("SELECT COUNT(*) FROM crimes")
     record = cursor.fetchone()
-    print("Database now has %i entries."%(record[0]))
+    print("Database now has %i entries." % (record[0]))
 
     cursor.close()
     conn.close()

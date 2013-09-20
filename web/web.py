@@ -19,14 +19,16 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_pyfile('config.cfg', silent=True)
 
+
 def connect_db():
     """ Returns an interface to the database
         made using setings in app.config
     """
-    return db_interface.db_interface(host = app.config['DB_HOST'],
-                                     dbname = app.config['DB_NAME'],
-                                     user = app.config['DB_USER'],
-                                     password = app.config['DB_PASSWORD'])
+    return db_interface.db_interface(host=app.config['DB_HOST'],
+                                     dbname=app.config['DB_NAME'],
+                                     user=app.config['DB_USER'],
+                                     password=app.config['DB_PASSWORD'])
+
 
 def get_db():
     """ Returns a new database interface if
@@ -36,22 +38,27 @@ def get_db():
         g.db = connect_db()
     return g.db
 
+
 @app.route("/")
 def index():
     return render_template('index.html')
+
 
 @app.route("/about")
 def about():
     return render_template('about.html')
 
+
 @app.route("/contact")
 def contact():
     return render_template('contact.html')
 
+
 @app.route("/slides")
 def slides():
     return render_template("slides.html",
-                           embed_code = app.config['SLIDE_EMBED_CODE'])
+                           embed_code=app.config['SLIDE_EMBED_CODE'])
+
 
 def prettify_str(name):
     """ Makes street addresses look good """
@@ -65,15 +72,17 @@ def prettify_str(name):
     name = re.sub(r'\'S(\s|$|\W)', lambda m: m.group(0).lower(), name)
     return name
 
+
 def pick_name_address(name, address):
     """ Picks a name, address combination that makes sense
         given that either can be missing """
     if address == 'None':
-      address = ""
+        address = ""
     if 'undetermined' in name.lower():
-      name = address
-      address = ""
+        name = address
+        address = ""
     return (name, address)
+
 
 def format_parking_for_output(parking):
     """ Formats the data so that it looks good when shown
@@ -82,11 +91,12 @@ def format_parking_for_output(parking):
         spot['location_name'] = prettify_str(spot['location_name'])
         spot['address'] = prettify_str(spot['address'])
         (spot['location_name'],
-         spot['address']) = pick_name_address(spot['location_name'], spot['address'])
-        spot['safescore'] = "%0.0f"%(spot['safescore'])
-        # 1 mile = 1609.344 m
+         spot['address']) = pick_name_address(spot['location_name'],
+                                              spot['address'])
+        spot['safescore'] = "%0.0f" % (spot['safescore'])
         try:
-            spot['distance'] = "%0.2f mi"%(spot['distance']/1609.344)
+            # 1 mile = 1609.344 m
+            spot['distance'] = "%0.2f mi" % (spot['distance']/1609.344)
         except KeyError:
             pass
         # Don't waste bandwidth on these
@@ -96,13 +106,15 @@ def format_parking_for_output(parking):
         spot.pop('id', None)
     return parking
 
+
 def pref_to_scale(x):
     """ Transforms a -10 to +10 preference where -10
         is closer and +10 is safer to a scaling factor for the
         crime rate """
     # Somewhat arbitrarily chosen.
     # By eye, 0.25 produces a good balance
-    return 0.25*pow(25, float(-x)/14)
+    return 0.25*pow(10, float(-x)/10)
+
 
 @app.route("/stats_data")
 def stats_data():
@@ -114,15 +126,16 @@ def stats_data():
     most_dangerous = format_parking_for_output([most_dangerous])[0]
 
     for spot in parking:
-        spot['safescore'] = "%0.0f"%(spot['safescore'])
+        spot['safescore'] = "%0.0f" % (spot['safescore'])
         spot.pop('rank', None)
         spot.pop('rate', None)
         spot.pop('address', None)
         spot.pop('location_name', None)
-    return jsonify(status = 'OK',
-                   n_parking = len(parking),
-                   results = parking,
-                   most_dangerous = most_dangerous)
+    return jsonify(status='OK',
+                   n_parking=len(parking),
+                   results=parking,
+                   most_dangerous=most_dangerous)
+
 
 @app.route("/search", methods=['GET'])
 def search():
@@ -134,9 +147,9 @@ def search():
         max_d = float(request.args['max_d'])
         pref = float(request.args['preference'].lower())
     except ValueError:
-        return jsonify(status = 'FAIL',
-                       center = point,
-                       description = 'Could not parse arguments.')
+        return jsonify(status='FAIL',
+                       center=point,
+                       description='Could not parse arguments.')
     rate_scale = pref_to_scale(pref)
 
     parking = get_db().get_nearby_parking('bicycle', point, max_d)
@@ -151,33 +164,32 @@ def search():
 
         suggested = [closest]
         parking.remove(closest)
-        #if safest != closest:
-        #    suggested.append(safest)
-        #    parking.remove(safest)
 
         # Basically we want a list of results that includes the closest,
-        # the safest, and the remaning top-ranked ones, sorted in order
-        # of their rank
+        # and the remaning top-ranked ones, sorted in order of their rank
         # Reverse so pop() gets the lowest saferank (which is better)
-        parking.sort(key = itemgetter('metric'), reverse=True)
+        parking.sort(key=itemgetter('metric'), reverse=True)
         while len(parking) > 0 and len(suggested) < app.config['MAX_RESULTS']:
             suggested.append(parking.pop())
-        suggested.sort(key = itemgetter('metric'))
+        suggested.sort(key=itemgetter('metric'))
 
         suggested = format_parking_for_output(suggested)
-        return jsonify(status = 'OK',
-                       center = point,
-                       results = suggested,
-                       n = len(suggested))
+        return jsonify(status='OK',
+                       center=point,
+                       results=suggested,
+                       n=len(suggested))
     else:
-        return jsonify(status = 'NONE_FOUND',
-                       center = point,
-                       n = 0,
-                       description = "Found no results for location and radius.")
+        return jsonify(status='NONE_FOUND',
+                       center=point,
+                       n=0,
+                       description=("Found no results for location" +
+                                    "and radius."))
+
 
 @app.route("/map", methods=['GET'])
 def map():
     return render_template("map.html")
+
 
 @app.route("/stats")
 def stats():
@@ -186,13 +198,14 @@ def stats():
     # Get stats for default preference
     stats = get_db().get_recommendation_stats(0.5)
     return render_template("stats.html",
-                            n_crime = n_crime,
-                            n_parking = n_parking,
-                            # 1 meter = 3.281 f
-                            avg_extra_d = "%0.0f"%(3.281*stats['avg_extra_distance']),
-                            risk_reduction = "%0.1f"%
-                                             (100*(1-stats['risk_ratio'])))
+                           n_crime=n_crime,
+                           n_parking=n_parking,
+                           avg_extra_d=("%0.0f" %  # 1 meter = 3.281 ft
+                                        (3.281*stats['avg_extra_distance'])),
+                           risk_reduction = ("%0.1f" %
+                                            (100*(1-stats['risk_ratio']))))
+
 
 if __name__ == "__main__":
-    app.run(host = app.config['HOST'],
-            port = app.config['PORT'])
+    app.run(host=app.config['HOST'],
+            port=app.config['PORT'])
